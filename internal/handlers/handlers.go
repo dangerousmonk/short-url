@@ -24,10 +24,10 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortUrl := storage.AppStorage.AddShortURL(fullURL)
+	shortURL := storage.AppStorage.AddShortURL(fullURL)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortUrl))
+	w.Write([]byte("http://localhost:8080/" + shortURL))
 
 }
 
