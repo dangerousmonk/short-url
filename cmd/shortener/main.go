@@ -5,14 +5,15 @@ import (
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/internal/handlers"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handlers.URLShortenerHandler)
-	mux.HandleFunc(`/{id}`, handlers.GetFullURLHandler)
+	r := chi.NewRouter()
+	r.Post("/", handlers.URLShortenerHandler)
+	r.Get("/{hash}", handlers.GetFullURLHandler)
 
-	err := http.ListenAndServe(":8080", mux)
+	err := http.ListenAndServe(":8080", r)
 	if err != nil {
 		log.Fatalf("Ошибка запуска: %v", err)
 		panic(err)

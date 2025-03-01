@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/dangerousmonk/short-url/internal/storage"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/require"
 )
 
@@ -44,9 +46,9 @@ func TestURLShortenerHandler(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
+			req := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			URLShortenerHandler(w, request)
+			URLShortenerHandler(w, req)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -73,36 +75,45 @@ func TestGetFullURLHandler(t *testing.T) {
 	storage.AppStorage.URLdata["dfccf368"] = "https://example.com"
 	storage.AppStorage.URLdata["65f7ae83"] = "https://www.google.com"
 
+	handler := http.HandlerFunc(GetFullURLHandler)
+	s := httptest.NewServer(handler)
+	defer s.Close()
+
 	cases := []struct {
 		name     string
 		method   string
-		path     string
+		hash     string
 		expected expected
 	}{
 		{
 			name:     "Check happy case",
 			method:   http.MethodGet,
-			path:     "/dfccf368",
+			hash:     "dfccf368",
 			expected: expected{statusCode: http.StatusTemporaryRedirect, location: "https://example.com"},
 		},
 		{
 			name:     "Check POST not allowed",
 			method:   http.MethodPost,
-			path:     "/dfccf368",
+			hash:     "dfccf368",
 			expected: expected{statusCode: http.StatusMethodNotAllowed, location: ""},
 		},
 		{
 			name:     "Check not exist URL",
 			method:   http.MethodGet,
-			path:     "/azc1f3fp",
+			hash:     "azc1f3fp",
 			expected: expected{statusCode: http.StatusNotFound, location: ""},
 		},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.method, test.path, nil)
+			req := httptest.NewRequest(test.method, s.URL+"/"+test.hash, nil)
+			ctx := chi.NewRouteContext()
+
+			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
+			ctx.URLParams.Add("hash", test.hash)
+
 			w := httptest.NewRecorder()
-			GetFullURLHandler(w, request)
+			handler(w, req)
 
 			result := w.Result()
 			defer result.Body.Close()

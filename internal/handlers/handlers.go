@@ -3,25 +3,28 @@ package handlers
 import (
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/dangerousmonk/short-url/internal/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
 	}
+
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "Invalid body", http.StatusBadRequest)
 		return
 	}
+
 	defer req.Body.Close()
 	fullURL := string(body)
+
 	if fullURL == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "URL is empty", http.StatusBadRequest)
 		return
 	}
 
@@ -32,19 +35,17 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func GetFullURLHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+func GetFullURLHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
 		return
 	}
-	defer req.Body.Close()
+	defer r.Body.Close()
 
-	path := req.URL.Path
-	parts := strings.Split(path, "/")
-	id := parts[len(parts)-1]
-	fullURL, isExist := storage.AppStorage.GetFullURL(id)
+	hash := chi.URLParam(r, "hash")
+	fullURL, isExist := storage.AppStorage.GetFullURL(hash)
 	if !isExist {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Location", fullURL)
