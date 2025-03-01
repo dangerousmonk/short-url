@@ -18,6 +18,7 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	defer req.Body.Close()
 	fullURL := string(body)
 	if fullURL == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -36,6 +37,7 @@ func GetFullURLHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	defer req.Body.Close()
 
 	path := req.URL.Path
 	parts := strings.Split(path, "/")
