@@ -32,7 +32,7 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 	shortURL := storage.AppStorage.AddShortURL(fullURL)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(config.Cfg.BaseURL + shortURL))
+	w.Write([]byte(config.Cfg.BaseURL + "/" + shortURL))
 
 }
 
