@@ -14,22 +14,20 @@ type Config struct {
 	BaseURL    string
 }
 
-var Cfg *Config
+var Cfg *Config = &Config{}
 
 func InitConfig() *Config {
-	cfg := &Config{}
-	flag.StringVar(&cfg.ServerAddr, "a", defaultServerAddr, "Address to run server")
-	flag.StringVar(&cfg.BaseURL, "b", defaultBaseURL, "Base address for shortened URL")
+	flag.StringVar(&Cfg.ServerAddr, "a", defaultServerAddr, "Address to run server")
+	flag.StringVar(&Cfg.BaseURL, "b", defaultBaseURL, "Base address for shortened URL")
 	flag.Parse()
 
-	if cfg.BaseURL == "" {
-		cfg.BaseURL = defaultBaseURL
+	if Cfg.BaseURL == "" {
+		Cfg.BaseURL = defaultBaseURL
 	}
 
-	if cfg.ServerAddr == "" {
-		cfg.ServerAddr = defaultServerAddr
+	if Cfg.ServerAddr == "" {
+		Cfg.ServerAddr = defaultServerAddr
 	}
 
-	Cfg = cfg
-	return cfg
+	return Cfg
 }
