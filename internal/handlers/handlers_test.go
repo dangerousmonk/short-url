@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/require"
@@ -17,6 +18,9 @@ func TestURLShortenerHandler(t *testing.T) {
 	type expected struct {
 		statusCode  int
 		contentType string
+	}
+	config.Cfg = &config.Config{
+		BaseURL: "http://localhost:8080/",
 	}
 
 	cases := []struct {

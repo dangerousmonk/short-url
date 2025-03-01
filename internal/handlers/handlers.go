@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -31,7 +32,7 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 	shortURL := storage.AppStorage.AddShortURL(fullURL)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("http://localhost:8080/" + shortURL))
+	w.Write([]byte(config.Cfg.BaseURL + shortURL))
 
 }
 
