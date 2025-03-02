@@ -20,7 +20,7 @@ func TestURLShortenerHandler(t *testing.T) {
 		contentType string
 	}
 	config.Cfg = &config.Config{
-		BaseURL: "http://localhost:8080/",
+		BaseURL: "http://localhost:8080",
 	}
 
 	cases := []struct {
@@ -59,10 +59,19 @@ func TestURLShortenerHandler(t *testing.T) {
 
 			require.Equal(t, test.expected.statusCode, w.Code, "Код ответ не совпадает с ожидаемым")
 
-			if test.expected.statusCode == http.StatusOK {
+			if test.expected.statusCode == http.StatusCreated {
 				require.Equal(t, test.expected.contentType, result.Header.Get("Content-Type"), "Content-Type не совпадает с ожидаемым")
-				_, err := io.ReadAll(result.Body)
+
+				body, err := io.ReadAll(result.Body)
 				require.NoError(t, err)
+
+				shortURL := string(body)
+				hash := strings.TrimPrefix(shortURL, config.Cfg.BaseURL+"/")
+				fullURL, isExist := storage.AppStorage.GetFullURL(hash)
+
+				require.Equal(t, test.body, fullURL, "Сохраненый URL не совпадает с ожидаемым")
+				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
+
 				err = result.Body.Close()
 				require.NoError(t, err)
 			}
