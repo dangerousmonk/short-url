@@ -11,6 +11,5 @@ func HashGenerator() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	hash := hex.EncodeToString(bytes)
-	return hash[:8], nil
+	return hex.EncodeToString(bytes), nil
 }

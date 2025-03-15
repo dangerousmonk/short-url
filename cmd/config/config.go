@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -17,23 +18,34 @@ type Config struct {
 	BaseURL    string
 }
 
-var Cfg *Config = &Config{}
-
 func InitConfig() *Config {
-	godotenv.Load()
-
-	flag.StringVar(&Cfg.ServerAddr, "a", defaultServerAddr, "Address to run server")
-	flag.StringVar(&Cfg.BaseURL, "b", defaultBaseURL, "Base address for shortened URL")
-	flag.Parse()
+	cfg := &Config{}
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Unable to load envs from file %v", err)
+	}
 
 	addr := os.Getenv("SERVER_ADDRESS")
-	basURL := os.Getenv("BASE_URL")
+	baseURL := os.Getenv("BASE_URL")
 	if addr != "" {
-		Cfg.ServerAddr = addr
+		cfg.ServerAddr = addr
 	}
-	if basURL != "" {
-		Cfg.BaseURL = basURL
+	if baseURL != "" {
+		cfg.BaseURL = baseURL
 	}
 
-	return Cfg
+	if cfg.BaseURL != "" && cfg.ServerAddr != "" {
+		return cfg
+	}
+
+	flag.StringVar(&cfg.ServerAddr, "a", cfg.ServerAddr, "Address to run server")
+	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address for shortened URL")
+	flag.Parse()
+
+	if cfg.ServerAddr == "" {
+		cfg.ServerAddr = defaultServerAddr
+	}
+	if cfg.BaseURL == "" {
+		cfg.BaseURL = defaultBaseURL
+	}
+	return cfg
 }

@@ -19,8 +19,9 @@ func TestURLShortenerHandler(t *testing.T) {
 		statusCode  int
 		contentType string
 	}
-	config.Cfg = &config.Config{
-		BaseURL: "http://localhost:8080",
+	cfg := config.Config{BaseURL: "http://localhost:8080"}
+	storage := &storage.MapStorage{
+		URLdata: make(map[string]string),
 	}
 
 	cases := []struct {
@@ -36,12 +37,6 @@ func TestURLShortenerHandler(t *testing.T) {
 			expected: expected{statusCode: http.StatusCreated, contentType: "text/plain"},
 		},
 		{
-			name:     "Check GET not allowed",
-			method:   http.MethodGet,
-			body:     "",
-			expected: expected{statusCode: http.StatusMethodNotAllowed, contentType: ""},
-		},
-		{
 			name:     "Check empty body",
 			method:   http.MethodPost,
 			body:     "",
@@ -52,7 +47,9 @@ func TestURLShortenerHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			req := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
-			URLShortenerHandler(w, req)
+
+			shortenHandler := URLShortenerHandler{Config: &cfg, MapStorage: storage}
+			shortenHandler.ServeHTTP(w, req)
 
 			result := w.Result()
 			defer result.Body.Close()
@@ -66,8 +63,8 @@ func TestURLShortenerHandler(t *testing.T) {
 				require.NoError(t, err)
 
 				shortURL := string(body)
-				hash := strings.TrimPrefix(shortURL, config.Cfg.BaseURL+"/")
-				fullURL, isExist := storage.AppStorage.GetFullURL(hash)
+				hash := strings.TrimPrefix(shortURL, cfg.BaseURL+"/")
+				fullURL, isExist := storage.GetFullURL(hash)
 
 				require.Equal(t, test.body, fullURL, "Сохраненый URL не совпадает с ожидаемым")
 				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
@@ -84,13 +81,15 @@ func TestGetFullURLHandler(t *testing.T) {
 		statusCode int
 		location   string
 	}
+	cfg := config.Config{
+		BaseURL:    "http://localhost:8080",
+		ServerAddr: "http://localhost:8080",
+	}
+	storage := storage.NewMapStorage()
+	storage.URLdata["dfccf368"] = "https://example.com"
+	storage.URLdata["65f7ae83"] = "https://www.google.com"
 
-	storage.AppStorage.URLdata["dfccf368"] = "https://example.com"
-	storage.AppStorage.URLdata["65f7ae83"] = "https://www.google.com"
-
-	handler := http.HandlerFunc(GetFullURLHandler)
-	s := httptest.NewServer(handler)
-	defer s.Close()
+	getURLhandler := GetFullURLHandler{Config: &cfg, MapStorage: storage}
 
 	cases := []struct {
 		name     string
@@ -102,13 +101,7 @@ func TestGetFullURLHandler(t *testing.T) {
 			name:     "Check happy case",
 			method:   http.MethodGet,
 			hash:     "dfccf368",
-			expected: expected{statusCode: http.StatusTemporaryRedirect, location: "https://example.com"},
-		},
-		{
-			name:     "Check POST not allowed",
-			method:   http.MethodPost,
-			hash:     "dfccf368",
-			expected: expected{statusCode: http.StatusMethodNotAllowed, location: ""},
+			expected: expected{statusCode: http.StatusFound, location: "https://example.com"},
 		},
 		{
 			name:     "Check not exist URL",
@@ -119,18 +112,15 @@ func TestGetFullURLHandler(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			req := httptest.NewRequest(test.method, s.URL+"/"+test.hash, nil)
+			w := httptest.NewRecorder()
 			ctx := chi.NewRouteContext()
-
+			req := httptest.NewRequest(test.method, cfg.ServerAddr+"/"+test.hash, nil)
 			req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, ctx))
 			ctx.URLParams.Add("hash", test.hash)
 
-			w := httptest.NewRecorder()
-			handler(w, req)
+			getURLhandler.ServeHTTP(w, req)
 
 			result := w.Result()
-			defer result.Body.Close()
-
 			require.Equal(t, test.expected.statusCode, w.Code, "Код ответ не совпадает с ожидаемым")
 
 			if test.expected.statusCode == http.StatusTemporaryRedirect {

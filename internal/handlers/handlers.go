@@ -9,12 +9,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
-	}
+type URLShortenerHandler struct {
+	Config     *config.Config
+	MapStorage *storage.MapStorage
+}
 
+type GetFullURLHandler struct {
+	Config     *config.Config
+	MapStorage *storage.MapStorage
+}
+
+func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
@@ -29,27 +34,22 @@ func URLShortenerHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortURL := storage.AppStorage.AddShortURL(fullURL)
+	shortURL := h.MapStorage.AddShortURL(fullURL)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(config.Cfg.BaseURL + "/" + shortURL))
+	w.Write([]byte(h.Config.BaseURL + "/" + shortURL))
 
 }
 
-func GetFullURLHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Invalid method", http.StatusMethodNotAllowed)
-		return
-	}
-	defer r.Body.Close()
-
-	hash := chi.URLParam(r, "hash")
-	fullURL, isExist := storage.AppStorage.GetFullURL(hash)
+func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	hash := chi.URLParam(req, "hash")
+	fullURL, isExist := h.MapStorage.GetFullURL(hash)
 	if !isExist {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Location", fullURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusFound)
 	w.Write([]byte{})
+
 }

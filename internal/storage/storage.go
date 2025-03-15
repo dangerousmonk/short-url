@@ -11,13 +11,11 @@ type MapStorage struct {
 	mutex   sync.RWMutex
 }
 
-func newMapStorage() *MapStorage {
+func NewMapStorage() *MapStorage {
 	return &MapStorage{
 		URLdata: make(map[string]string),
 	}
 }
-
-var AppStorage = newMapStorage()
 
 func (s *MapStorage) GetFullURL(shortURL string) (FullURL string, isExist bool) {
 	s.mutex.RLock()
