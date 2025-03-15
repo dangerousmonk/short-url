@@ -18,6 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed init log: %v", err)
 	}
+	defer logger.Sync()
 	r := chi.NewRouter()
 	r.Use(logging.RequestLogger)
 
