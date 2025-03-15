@@ -49,7 +49,8 @@ func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 	w.Header().Set("Location", fullURL)
-	w.WriteHeader(http.StatusFound)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 	w.Write([]byte{})
+	http.Redirect(w, req, fullURL, http.StatusTemporaryRedirect)
 
 }

@@ -101,7 +101,7 @@ func TestGetFullURLHandler(t *testing.T) {
 			name:     "Check happy case",
 			method:   http.MethodGet,
 			hash:     "dfccf368",
-			expected: expected{statusCode: http.StatusFound, location: "https://example.com"},
+			expected: expected{statusCode: http.StatusTemporaryRedirect, location: "https://example.com"},
 		},
 		{
 			name:     "Check not exist URL",
