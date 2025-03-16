@@ -1,14 +1,17 @@
 package main
 
 import (
+	"compress/gzip"
 	"log"
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/compress"
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
@@ -20,8 +23,14 @@ func main() {
 	}
 	defer logger.Sync()
 	r := chi.NewRouter()
-	r.Use(logging.RequestLogger)
+	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
 
+	// middleware
+	r.Use(logging.RequestLogger)
+	r.Use(compress.DecompressMiddleware)
+	r.Use(compressor.Handler)
+
+	// handlers
 	shortenHandler := handlers.URLShortenerHandler{Config: cfg, MapStorage: storage}
 	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, MapStorage: storage}
 	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, MapStorage: storage}
