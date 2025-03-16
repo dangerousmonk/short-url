@@ -180,6 +180,7 @@ func TestAPIShortenerHandler(t *testing.T) {
 			shortenHandler.ServeHTTP(w, testReq)
 
 			result := w.Result()
+			defer result.Body.Close()
 
 			require.Equal(t, test.expected.statusCode, w.Code, "Код ответ не совпадает с ожидаемым")
 
