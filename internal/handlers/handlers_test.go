@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/require"
@@ -129,6 +131,69 @@ func TestGetFullURLHandler(t *testing.T) {
 				require.NoError(t, err)
 				err = result.Body.Close()
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAPIShortenerHandler(t *testing.T) {
+	type expected struct {
+		statusCode  int
+		contentType string
+	}
+	cfg := config.Config{BaseURL: "http://localhost:8080"}
+	storage := &storage.MapStorage{
+		URLdata: make(map[string]string),
+	}
+
+	cases := []struct {
+		name     string
+		method   string
+		body     string
+		expected expected
+	}{
+		{
+			name:     "Check happy case",
+			method:   http.MethodPost,
+			body:     `{"url":"https://example.com"}`,
+			expected: expected{statusCode: http.StatusCreated, contentType: "application/json"},
+		},
+		{
+			name:     "Check empty body",
+			method:   http.MethodPost,
+			body:     `{}`,
+			expected: expected{statusCode: http.StatusBadRequest, contentType: ""},
+		},
+	}
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			var req models.Request
+			err := json.NewDecoder(strings.NewReader(test.body)).Decode(&req)
+			if err != nil {
+				t.Errorf("error not nil on decoding | %v", err)
+			}
+
+			testReq := httptest.NewRequest(test.method, "/api/shorten", strings.NewReader(test.body))
+			w := httptest.NewRecorder()
+
+			shortenHandler := APIShortenerHandler{Config: &cfg, MapStorage: storage}
+			shortenHandler.ServeHTTP(w, testReq)
+
+			result := w.Result()
+
+			require.Equal(t, test.expected.statusCode, w.Code, "Код ответ не совпадает с ожидаемым")
+
+			if test.expected.statusCode == http.StatusCreated {
+				require.Equal(t, test.expected.contentType, result.Header.Get("Content-Type"), "Content-Type не совпадает с ожидаемым")
+				response := models.Response{}
+				json.NewDecoder(result.Body).Decode(&response)
+
+				hash := strings.TrimPrefix(response.Result, cfg.BaseURL+"/")
+				fullURL, isExist := storage.GetFullURL(hash)
+
+				require.Equal(t, req.URL, fullURL, "Сохраненый URL не совпадает с ожидаемым")
+				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
+
 			}
 		})
 	}

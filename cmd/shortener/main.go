@@ -23,9 +23,11 @@ func main() {
 	r.Use(logging.RequestLogger)
 
 	shortenHandler := handlers.URLShortenerHandler{Config: cfg, MapStorage: storage}
+	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, MapStorage: storage}
 	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, MapStorage: storage}
 
 	r.Post("/", shortenHandler.ServeHTTP)
+	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 
