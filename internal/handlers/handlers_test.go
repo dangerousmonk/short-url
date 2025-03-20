@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -17,11 +18,20 @@ import (
 )
 
 func TestURLShortenerHandler(t *testing.T) {
+	tempFile, err := os.CreateTemp("", "*.json")
+	if err != nil {
+		t.Fatalf("Error on creating tmp file %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+
 	type expected struct {
 		statusCode  int
 		contentType string
 	}
-	cfg := config.Config{BaseURL: "http://localhost:8080"}
+	cfg := config.Config{
+		BaseURL:         "http://localhost:8080",
+		StorageFilePath: tempFile.Name(),
+	}
 	storage := &storage.MapStorage{
 		URLdata: make(map[string]string),
 	}
@@ -137,11 +147,20 @@ func TestGetFullURLHandler(t *testing.T) {
 }
 
 func TestAPIShortenerHandler(t *testing.T) {
+	tempFile, err := os.CreateTemp("", "*.json")
+	if err != nil {
+		t.Fatalf("Error on creating tmp file %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+
 	type expected struct {
 		statusCode  int
 		contentType string
 	}
-	cfg := config.Config{BaseURL: "http://localhost:8080"}
+	cfg := config.Config{
+		BaseURL:         "http://localhost:8080",
+		StorageFilePath: tempFile.Name(),
+	}
 	storage := &storage.MapStorage{
 		URLdata: make(map[string]string),
 	}

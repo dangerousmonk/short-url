@@ -42,7 +42,11 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL := h.MapStorage.AddShortURL(fullURL)
+	shortURL, err := h.MapStorage.AddShortURL(fullURL, h.Config.StorageFilePath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(h.Config.BaseURL + "/" + shortURL))
@@ -78,7 +82,11 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL := h.MapStorage.AddShortURL(r.URL)
+	shortURL, err := h.MapStorage.AddShortURL(r.URL, h.Config.StorageFilePath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	resp := models.Response{Result: h.Config.BaseURL + "/" + shortURL}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -13,13 +13,15 @@ const (
 	defaultBaseURL    = "http://localhost:8080"
 	defaultLogLevel   = "INFO"
 	defaultEnv        = "dev"
+	defaultFilePath   = "./internal/storage/storage.json"
 )
 
 type Config struct {
-	ServerAddr string
-	BaseURL    string
-	LogLevel   string
-	Env        string
+	ServerAddr      string
+	BaseURL         string
+	LogLevel        string
+	Env             string
+	StorageFilePath string
 }
 
 func InitConfig() *Config {
@@ -32,6 +34,7 @@ func InitConfig() *Config {
 	addr := os.Getenv("SERVER_ADDRESS")
 	baseURL := os.Getenv("BASE_URL")
 	envLogLevel := os.Getenv("LOG_LEVEL")
+	storagePath := os.Getenv("STORAGE_FILE_PATH")
 	if addr != "" {
 		cfg.ServerAddr = addr
 	}
@@ -41,10 +44,14 @@ func InitConfig() *Config {
 	if envLogLevel != "" {
 		cfg.LogLevel = envLogLevel
 	}
+	if storagePath != "" {
+		cfg.StorageFilePath = storagePath
+	}
 
 	// Чтение флагов командной строки
 	flag.StringVar(&cfg.ServerAddr, "a", cfg.ServerAddr, "Address to run server")
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address for shortened URL")
+	flag.StringVar(&cfg.StorageFilePath, "f", cfg.StorageFilePath, "Path to storage file")
 	flag.Parse()
 
 	// Инициализация переменных по умолчанию
@@ -60,6 +67,9 @@ func InitConfig() *Config {
 	}
 	if cfg.Env == "" {
 		cfg.Env = defaultEnv
+	}
+	if cfg.StorageFilePath == "" {
+		cfg.StorageFilePath = defaultFilePath
 	}
 	return cfg
 }

@@ -22,6 +22,8 @@ func main() {
 		log.Fatalf("Failed init log: %v", err)
 	}
 	defer logger.Sync()
+
+	storage.LoadFromFile(cfg)
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
 
