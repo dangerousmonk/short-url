@@ -34,7 +34,7 @@ func InitConfig() *Config {
 	addr := os.Getenv("SERVER_ADDRESS")
 	baseURL := os.Getenv("BASE_URL")
 	envLogLevel := os.Getenv("LOG_LEVEL")
-	storagePath := os.Getenv("STORAGE_FILE_PATH")
+	storagePath := os.Getenv("FILE_STORAGE_PATH")
 	if addr != "" {
 		cfg.ServerAddr = addr
 	}
