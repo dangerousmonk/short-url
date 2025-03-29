@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 var CompressedContentTypes = []string{
@@ -34,20 +36,22 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Закрываем старый r.Body перед заменой
-		if r.Body != nil {
-			if err := r.Body.Close(); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-
 		reader, err := decompress(r.Body)
 		if err != nil {
+			logging.Log.Warnf("Failed to decompress | err=%v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		defer reader.Close()
+
+		// Закрываем старый r.Body перед заменой
+		if r.Body != nil {
+			if err := r.Body.Close(); err != nil {
+				logging.Log.Warnf("Failed to close original body | err=%v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 		r.Body = reader
 		next.ServeHTTP(w, r)
 	}
