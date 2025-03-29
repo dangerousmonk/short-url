@@ -21,9 +21,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed init log: %v", err)
 	}
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Warnf("Failed to sync logger: %v", err)
+		}
+	}()
 
-	storage.LoadFromFile(cfg)
+	err = storage.LoadFromFile(cfg)
+	if err != nil {
+		log.Fatalf("Failed init storage: %v", err)
+	}
+
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
 

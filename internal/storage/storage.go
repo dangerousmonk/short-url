@@ -37,10 +37,17 @@ func (s *MapStorage) AddShortURL(fullURL string, storagePath string) (shortURL s
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	shortURL, err = helpers.HashGenerator()
-	if err != nil {
-		return
+	for {
+		shortURL, err = helpers.HashGenerator()
+		if err != nil {
+			return "", err
+		}
+
+		if _, exists := s.URLdata[shortURL]; !exists {
+			break
+		}
 	}
+
 	s.URLdata[shortURL] = fullURL
 	urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: shortURL, OriginalURL: fullURL}
 
@@ -62,6 +69,9 @@ func (s *MapStorage) LoadFromFile(cfg *config.Config) error {
 		return err
 	}
 	defer reader.Close()
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
 	_, err = reader.ReadData(s)
 	if err != nil {

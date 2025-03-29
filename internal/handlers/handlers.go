@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/helpers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage"
@@ -37,8 +38,8 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	defer req.Body.Close()
 	fullURL := string(body)
 
-	if fullURL == "" {
-		http.Error(w, "URL is empty", http.StatusBadRequest)
+	if !helpers.IsURLValid(fullURL) {
+		http.Error(w, "Invalid URL provided", http.StatusBadRequest)
 		return
 	}
 
@@ -70,15 +71,15 @@ func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var r models.Request
 	if err := json.NewDecoder(req.Body).Decode(&r); err != nil {
-		logging.Log.Warnf("Error on decoding body | %v", err)
+		logging.Log.Warnf("Error on decoding body | method=%v | url=%v | err=%v", req.Method, req.URL, err)
 		http.Error(w, "Error on decoding body", http.StatusInternalServerError)
 		return
 	}
 
 	defer req.Body.Close()
 
-	if r.URL == "" {
-		http.Error(w, "URL is empty", http.StatusBadRequest)
+	if !helpers.IsURLValid(r.URL) {
+		http.Error(w, "Invalid URL provided", http.StatusBadRequest)
 		return
 	}
 

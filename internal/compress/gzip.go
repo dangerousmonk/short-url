@@ -2,7 +2,6 @@ package compress
 
 import (
 	"compress/gzip"
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -13,11 +12,7 @@ var CompressedContentTypes = []string{
 	"application/json",
 }
 
-func decompress(encodings string, body io.ReadCloser) (io.ReadCloser, error) {
-	encodings = strings.ToLower(encodings)
-	if !strings.Contains(encodings, "gzip") {
-		return nil, fmt.Errorf("unsupported compression method: %s", encodings)
-	}
+func decompress(body io.ReadCloser) (io.ReadCloser, error) {
 	reader, err := gzip.NewReader(body)
 	if err != nil {
 		return nil, err
@@ -32,7 +27,22 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		reader, err := decompress(encodings, r.Body)
+
+		encodings = strings.ToLower(encodings)
+		if !strings.Contains(encodings, "gzip") {
+			http.Error(w, "Unsupported compression method", http.StatusUnsupportedMediaType)
+			return
+		}
+
+		// Закрываем старый r.Body перед заменой
+		if r.Body != nil {
+			if err := r.Body.Close(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		reader, err := decompress(r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
