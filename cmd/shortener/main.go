@@ -37,12 +37,12 @@ func main() {
 
 	db, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
-		logger.Fatalf("could not connect to database: %v", err)
+		logger.Warnf("could not connect to database: %v", err)
 	}
 	defer db.Close()
 
 	if err := db.PingContext(context.Background()); err != nil {
-		logger.Fatalf("unable to reach database: %v", err)
+		logger.Warnf("unable to reach database: %v", err)
 	}
 
 	logger.Info("Database setup complete")
