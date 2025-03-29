@@ -59,7 +59,7 @@ func main() {
 	shortenHandler := handlers.URLShortenerHandler{Config: cfg, MapStorage: storage}
 	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, MapStorage: storage}
 	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, MapStorage: storage}
-	pingHandler := handlers.PingHandler{Config: cfg, Db: db}
+	pingHandler := handlers.PingHandler{Config: cfg, DB: db}
 
 	r.Post("/", shortenHandler.ServeHTTP)
 	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
