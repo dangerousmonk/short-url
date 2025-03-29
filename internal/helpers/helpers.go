@@ -3,6 +3,7 @@ package helpers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"net/url"
 )
 
 func HashGenerator() (string, error) {
@@ -12,4 +13,12 @@ func HashGenerator() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func IsURLValid(rawURL string) bool {
+	parsedURL, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return false
+	}
+	return parsedURL.Scheme == "https" || parsedURL.Scheme == "http"
 }
