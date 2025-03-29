@@ -27,7 +27,7 @@ type Config struct {
 func InitConfig() *Config {
 	cfg := &Config{}
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("Unable to load envs from file %v", err)
+		log.Printf("Unable to load envs from file %v", err)
 	}
 	// Чтение флагов командной строки
 	flag.StringVar(&cfg.ServerAddr, "a", cfg.ServerAddr, "Address to run server")
