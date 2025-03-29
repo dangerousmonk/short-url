@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/helpers"
@@ -26,6 +29,11 @@ type GetFullURLHandler struct {
 type APIShortenerHandler struct {
 	Config     *config.Config
 	MapStorage *storage.MapStorage
+}
+
+type PingHandler struct {
+	Config *config.Config
+	Db     *sql.DB
 }
 
 func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -98,5 +106,17 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		http.Error(w, "Error on encoding response", http.StatusInternalServerError)
 		return
 	}
+
+}
+
+func (h *PingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
+	defer cancel()
+	if err := h.Db.PingContext(ctx); err != nil {
+		logging.Log.Errorf("Database unreachable | %v", err)
+		http.Error(w, "Database unreachable", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 
 }

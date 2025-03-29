@@ -22,6 +22,7 @@ type Config struct {
 	LogLevel        string
 	Env             string
 	StorageFilePath string
+	DatabaseDSN     string
 }
 
 func InitConfig() *Config {
@@ -33,6 +34,7 @@ func InitConfig() *Config {
 	flag.StringVar(&cfg.ServerAddr, "a", cfg.ServerAddr, "Address to run server")
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address for shortened URL")
 	flag.StringVar(&cfg.StorageFilePath, "f", cfg.StorageFilePath, "Path to storage file")
+	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
 	flag.Parse()
 
 	// Чтение переменных окружения
@@ -54,6 +56,11 @@ func InitConfig() *Config {
 	storagePath := os.Getenv("FILE_STORAGE_PATH")
 	if storagePath != "" {
 		cfg.StorageFilePath = storagePath
+	}
+
+	dbDSN := os.Getenv("DATABASE_DSN")
+	if dbDSN != "" {
+		cfg.DatabaseDSN = dbDSN
 	}
 
 	// Инициализация переменных по умолчанию

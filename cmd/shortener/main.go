@@ -2,6 +2,8 @@ package main
 
 import (
 	"compress/gzip"
+	"context"
+	"database/sql"
 	"log"
 	"net/http"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -29,8 +32,20 @@ func main() {
 
 	err = storage.LoadFromFile(cfg)
 	if err != nil {
-		log.Fatalf("Failed init storage: %v", err)
+		logger.Fatalf("Failed init storage: %v", err)
 	}
+
+	db, err := sql.Open("pgx", cfg.DatabaseDSN)
+	if err != nil {
+		logger.Fatalf("could not connect to database: %v", err)
+	}
+	defer db.Close()
+
+	if err := db.PingContext(context.Background()); err != nil {
+		logger.Fatalf("unable to reach database: %v", err)
+	}
+
+	logger.Info("Database setup complete")
 
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
@@ -44,10 +59,13 @@ func main() {
 	shortenHandler := handlers.URLShortenerHandler{Config: cfg, MapStorage: storage}
 	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, MapStorage: storage}
 	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, MapStorage: storage}
+	pingHandler := handlers.PingHandler{Config: cfg, Db: db}
 
 	r.Post("/", shortenHandler.ServeHTTP)
 	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
+	r.Get("/ping", pingHandler.ServeHTTP)
+
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 
 	err = http.ListenAndServe(cfg.ServerAddr, r)
