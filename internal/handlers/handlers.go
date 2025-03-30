@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,23 +16,23 @@ import (
 )
 
 type URLShortenerHandler struct {
-	Config     *config.Config
-	MapStorage *storage.MapStorage
+	Config  *config.Config
+	Storage storage.Storage
 }
 
 type GetFullURLHandler struct {
-	Config     *config.Config
-	MapStorage *storage.MapStorage
+	Config  *config.Config
+	Storage storage.Storage
 }
 
 type APIShortenerHandler struct {
-	Config     *config.Config
-	MapStorage *storage.MapStorage
+	Config  *config.Config
+	Storage storage.Storage
 }
 
 type PingHandler struct {
-	Config *config.Config
-	DB     *sql.DB
+	Config  *config.Config
+	Storage storage.Storage
 }
 
 func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -51,7 +50,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.MapStorage.AddShortURL(fullURL, h.Config.StorageFilePath)
+	shortURL, err := h.Storage.AddShortURL(fullURL, h.Config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -64,7 +63,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	hash := chi.URLParam(req, "hash")
-	fullURL, isExist := h.MapStorage.GetFullURL(hash)
+	fullURL, isExist := h.Storage.GetFullURL(hash)
 	if !isExist {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
@@ -91,7 +90,7 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.MapStorage.AddShortURL(r.URL, h.Config.StorageFilePath)
+	shortURL, err := h.Storage.AddShortURL(r.URL, h.Config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -112,7 +111,8 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 func (h *PingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx, cancel := context.WithTimeout(req.Context(), 1*time.Second)
 	defer cancel()
-	if err := h.DB.PingContext(ctx); err != nil {
+	err := h.Storage.Ping(ctx)
+	if err != nil {
 		logging.Log.Errorf("Database unreachable | %v", err)
 		http.Error(w, "Database unreachable", http.StatusInternalServerError)
 		return

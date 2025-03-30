@@ -19,9 +19,7 @@ func TestLoadFromFile(t *testing.T) {
 	cfg := &config.Config{
 		StorageFilePath: tempFile.Name(),
 	}
-	storage := &MapStorage{
-		URLdata: make(map[string]string),
-	}
+	mapStorage := InitMapStorage(cfg)
 
 	expectedRows := []*Row{
 		{
@@ -45,17 +43,17 @@ func TestLoadFromFile(t *testing.T) {
 		require.NoError(t, err, "Error on Write to tmp file")
 	}
 
-	err = storage.LoadFromFile(cfg)
+	err = LoadFromFile(mapStorage, cfg)
 	if err != nil {
 		t.Fatalf("ошибка при загрузке данных из файла: %v", err)
 	}
 	require.NoError(t, err, "Error on LoadFromFile")
 
 	for _, row := range expectedRows {
-		actualURL, ok := storage.URLdata[row.ShortURL]
+		actualURL, ok := mapStorage.URLdata[row.ShortURL]
 		assert.True(t, ok, "Expected url missing")
 		require.Equal(t, row.OriginalURL, actualURL, "Save URL differ from expected")
 	}
 
-	require.Equal(t, len(storage.URLdata), len(expectedRows), "Diffrent number of rows")
+	require.Equal(t, len(mapStorage.URLdata), len(expectedRows), "Diffrent number of rows")
 }

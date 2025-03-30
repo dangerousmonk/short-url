@@ -60,7 +60,7 @@ func TestURLShortenerHandler(t *testing.T) {
 			req := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
 
-			shortenHandler := URLShortenerHandler{Config: &cfg, MapStorage: storage}
+			shortenHandler := URLShortenerHandler{Config: &cfg, Storage: storage}
 			shortenHandler.ServeHTTP(w, req)
 
 			result := w.Result()
@@ -97,11 +97,11 @@ func TestGetFullURLHandler(t *testing.T) {
 		BaseURL:    "http://localhost:8080",
 		ServerAddr: "http://localhost:8080",
 	}
-	storage := storage.NewMapStorage()
+	storage := storage.InitMapStorage(&cfg)
 	storage.URLdata["dfccf368"] = "https://example.com"
 	storage.URLdata["65f7ae83"] = "https://www.google.com"
 
-	getURLhandler := GetFullURLHandler{Config: &cfg, MapStorage: storage}
+	getURLhandler := GetFullURLHandler{Config: &cfg, Storage: storage}
 
 	cases := []struct {
 		name     string
@@ -195,7 +195,7 @@ func TestAPIShortenerHandler(t *testing.T) {
 			testReq := httptest.NewRequest(test.method, "/api/shorten", strings.NewReader(test.body))
 			w := httptest.NewRecorder()
 
-			shortenHandler := APIShortenerHandler{Config: &cfg, MapStorage: storage}
+			shortenHandler := APIShortenerHandler{Config: &cfg, Storage: storage}
 			shortenHandler.ServeHTTP(w, testReq)
 
 			result := w.Result()

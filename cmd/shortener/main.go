@@ -3,7 +3,6 @@ package main
 import (
 	"compress/gzip"
 	"context"
-	"database/sql"
 	"log"
 	"net/http"
 
@@ -19,7 +18,6 @@ import (
 
 func main() {
 	cfg := config.InitConfig()
-	storage := storage.NewMapStorage()
 	logger, err := logging.InitLogger(cfg.LogLevel, cfg.Env)
 	if err != nil {
 		log.Fatalf("Failed init log: %v", err)
@@ -30,22 +28,23 @@ func main() {
 		}
 	}()
 
-	err = storage.LoadFromFile(cfg)
-	if err != nil {
-		logger.Fatalf("Failed init storage: %v", err)
+	ctx := context.Background()
+	var appStorage storage.Storage
+	if cfg.DatabaseDSN != "" {
+		db, err := storage.InitDB(ctx, cfg.DatabaseDSN)
+		if err != nil {
+			logger.Fatalf("Failed init postgresql: %v", err)
+		}
+		defer db.Close()
+		appStorage = &storage.PostgreSQLStorage{DB: db}
+	} else {
+		mapStorage := storage.InitMapStorage(cfg)
+		err = storage.LoadFromFile(mapStorage, cfg)
+		if err != nil {
+			logger.Fatalf("Failed init file storage: %v", err)
+		}
+		appStorage = mapStorage
 	}
-
-	db, err := sql.Open("pgx", cfg.DatabaseDSN)
-	if err != nil {
-		logger.Warnf("could not connect to database: %v", err)
-	}
-	defer db.Close()
-
-	if err := db.PingContext(context.Background()); err != nil {
-		logger.Warnf("unable to reach database: %v", err)
-	}
-
-	logger.Info("Database setup complete")
 
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
@@ -56,10 +55,10 @@ func main() {
 	r.Use(compressor.Handler)
 
 	// handlers
-	shortenHandler := handlers.URLShortenerHandler{Config: cfg, MapStorage: storage}
-	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, MapStorage: storage}
-	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, MapStorage: storage}
-	pingHandler := handlers.PingHandler{Config: cfg, DB: db}
+	shortenHandler := handlers.URLShortenerHandler{Config: cfg, Storage: appStorage}
+	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
+	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, Storage: appStorage}
+	pingHandler := handlers.PingHandler{Config: cfg, Storage: appStorage}
 
 	r.Post("/", shortenHandler.ServeHTTP)
 	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
