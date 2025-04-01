@@ -55,15 +55,17 @@ func main() {
 	r.Use(compressor.Handler)
 
 	// handlers
-	shortenHandler := handlers.URLShortenerHandler{Config: cfg, Storage: appStorage}
-	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
-	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, Storage: appStorage}
 	pingHandler := handlers.PingHandler{Config: cfg, Storage: appStorage}
+	shortenHandler := handlers.URLShortenerHandler{Config: cfg, Storage: appStorage}
+	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, Storage: appStorage}
+	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
+	apiBatchHandler := handlers.APIShortenBatchHandler{Config: cfg, Storage: appStorage}
 
-	r.Post("/", shortenHandler.ServeHTTP)
-	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
-	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
 	r.Get("/ping", pingHandler.ServeHTTP)
+	r.Post("/", shortenHandler.ServeHTTP)
+	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
+	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
+	r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
 
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 

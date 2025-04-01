@@ -7,6 +7,7 @@ import (
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/helpers"
+	"github.com/dangerousmonk/short-url/internal/models"
 )
 
 type Row struct {
@@ -20,6 +21,7 @@ type Storage interface {
 	GetFullURL(shortURL string) (fullURL string, isExist bool)
 	AddShortURL(fullURL string, cfg *config.Config) (shortURL string, err error)
 	Ping(ctx context.Context) error
+	AddBatch(urls []models.APIBatchModel, cfg *config.Config) error
 }
 
 type MapStorage struct {
@@ -74,6 +76,26 @@ func (s *MapStorage) AddShortURL(fullURL string, cfg *config.Config) (shortURL s
 }
 
 func (s *MapStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (s *MapStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	writer, err := NewWriter(cfg.StorageFilePath)
+	if err != nil {
+		return err
+	}
+	defer writer.Close()
+
+	for _, url := range urls {
+		s.URLdata[url.Hash] = url.OriginalURL
+		urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: url.Hash, OriginalURL: url.OriginalURL}
+		if err = writer.WriteData(&urlData); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

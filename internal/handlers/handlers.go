@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -35,6 +36,11 @@ type PingHandler struct {
 	Storage storage.Storage
 }
 
+type APIShortenBatchHandler struct {
+	Config  *config.Config
+	Storage storage.Storage
+}
+
 func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -52,6 +58,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 	shortURL, err := h.Storage.AddShortURL(fullURL, h.Config)
 	if err != nil {
+		logging.Log.Warnf("Error on inserting URL | %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -92,6 +99,7 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 	shortURL, err := h.Storage.AddShortURL(r.URL, h.Config)
 	if err != nil {
+		logging.Log.Warnf("Error on inserting URL | %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -118,5 +126,58 @@ func (h *PingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+
+}
+
+func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var (
+		urls []models.APIBatchModel
+		resp []models.APIBatchResponse
+	)
+	if err := json.NewDecoder(req.Body).Decode(&urls); err != nil {
+		logging.Log.Warnf("Error on decoding body | method=%v | url=%v | err=%v", req.Method, req.URL, err)
+		http.Error(w, "Error on decoding body", http.StatusInternalServerError)
+		return
+	}
+
+	defer req.Body.Close()
+
+	if len(urls) == 0 {
+		http.Error(w, "No URLs in body", http.StatusBadRequest)
+		return
+	}
+
+	for idx, url := range urls {
+		if !helpers.IsURLValid(url.OriginalURL) {
+			http.Error(w, fmt.Sprintf("Invalid URL: %s", url.OriginalURL), http.StatusBadRequest)
+			return
+		}
+		hash, err := helpers.HashGenerator()
+		if err != nil {
+			logging.Log.Warnf("Error on generating hash | method=%v | url=%v | err=%v", req.Method, req.URL, err)
+			http.Error(w, "Error on generating hash", http.StatusInternalServerError)
+			return
+		}
+		short := h.Config.BaseURL + "/" + hash
+		urls[idx].ShortURL = short
+		urls[idx].Hash = hash
+		resp = append(resp, models.APIBatchResponse{CorrelationID: url.CorrelationID, ShortURL: short})
+	}
+
+	err := h.Storage.AddBatch(urls, h.Config)
+	if err != nil {
+		logging.Log.Warnf("Error on saving to storage | method=%v | url=%v | err=%v", req.Method, req.URL, err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		logging.Log.Warnf("Error on encoding response | %v", err)
+		http.Error(w, "Error on encoding response", http.StatusInternalServerError)
+		return
+	}
 
 }

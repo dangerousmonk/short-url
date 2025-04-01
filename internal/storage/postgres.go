@@ -47,10 +47,30 @@ func (ps *PostgreSQLStorage) AddShortURL(fullURL string, cfg *config.Config) (sh
 
 	_, err = ps.DB.Exec(`INSERT INTO urls (short_url, original_url) VALUES ($1, $2)`, shortURL, fullURL)
 	if err != nil {
-		logging.Log.Warnf("Error on inserting URL | %v", err)
 		return
 	}
 	return shortURL, nil
+}
+
+func (ps *PostgreSQLStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+	tx, err := ps.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, urlModel := range urls {
+		_, err = tx.Exec(`INSERT INTO urls (short_url, original_url) VALUES ($1, $2)`, urlModel.Hash, urlModel.OriginalURL)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func InitDB(ctx context.Context, dsn string) (*sql.DB, error) {

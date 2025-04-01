@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	config "github.com/dangerousmonk/short-url/cmd/config"
+	models "github.com/dangerousmonk/short-url/internal/models"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -33,6 +34,20 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
+}
+
+// AddBatch mocks base method.
+func (m *MockStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddBatch", urls, cfg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddBatch indicates an expected call of AddBatch.
+func (mr *MockStorageMockRecorder) AddBatch(urls, cfg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockStorage)(nil).AddBatch), urls, cfg)
 }
 
 // AddShortURL mocks base method.
