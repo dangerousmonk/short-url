@@ -15,6 +15,7 @@ type Row struct {
 	OriginalURL string `json:"original_url"`
 }
 
+//go:generate mockgen -package mocks -source storage.go -destination ./mocks/mock_storage.go Storage
 type Storage interface {
 	GetFullURL(shortURL string) (fullURL string, isExist bool)
 	AddShortURL(fullURL string, cfg *config.Config) (shortURL string, err error)
