@@ -37,11 +37,12 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // AddBatch mocks base method.
-func (m *MockStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+func (m *MockStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddBatch", urls, cfg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].([]models.APIBatchResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // AddBatch indicates an expected call of AddBatch.

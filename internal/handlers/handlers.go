@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -59,6 +60,13 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	shortURL, err := h.Storage.AddShortURL(fullURL, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
+		var existsErr *storage.URLExistsError
+		if errors.As(err, &existsErr) {
+			w.Header().Set("Content-Type", "text/plain")
+			w.WriteHeader(http.StatusConflict)
+			w.Write([]byte(h.Config.BaseURL + "/" + existsErr.ShortURL))
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -100,6 +108,19 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 	shortURL, err := h.Storage.AddShortURL(r.URL, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
+		var existsErr *storage.URLExistsError
+		if errors.As(err, &existsErr) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			resp := models.Response{Result: h.Config.BaseURL + "/" + existsErr.ShortURL}
+
+			if err := json.NewEncoder(w).Encode(resp); err != nil {
+				logging.Log.Warnf("Error on encoding response | %v", err)
+				http.Error(w, "Error on encoding response", http.StatusInternalServerError)
+				return
+			}
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -139,7 +160,6 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		http.Error(w, "Error on decoding body", http.StatusInternalServerError)
 		return
 	}
-
 	defer req.Body.Close()
 
 	if len(urls) == 0 {
@@ -161,10 +181,9 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		short := h.Config.BaseURL + "/" + hash
 		urls[idx].ShortURL = short
 		urls[idx].Hash = hash
-		resp = append(resp, models.APIBatchResponse{CorrelationID: url.CorrelationID, ShortURL: short})
 	}
 
-	err := h.Storage.AddBatch(urls, h.Config)
+	resp, err := h.Storage.AddBatch(urls, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on saving to storage | method=%v | url=%v | err=%v", req.Method, req.URL, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

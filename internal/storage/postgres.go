@@ -3,16 +3,24 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/helpers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type PostgreSQLStorage struct {
 	DB *sql.DB
+}
+
+type URLExistsError struct {
+	ShortURL string
+	Err      string
 }
 
 func (ps *PostgreSQLStorage) Ping(ctx context.Context) error {
@@ -46,31 +54,39 @@ func (ps *PostgreSQLStorage) AddShortURL(fullURL string, cfg *config.Config) (sh
 	}
 
 	_, err = ps.DB.Exec(`INSERT INTO urls (short_url, original_url) VALUES ($1, $2)`, shortURL, fullURL)
-	if err != nil {
-		return
+	if err == nil {
+		return shortURL, nil
 	}
-	return shortURL, nil
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
+		err = ps.NewURLExistsError(fullURL, err)
+	}
+	return "", err
 }
 
-func (ps *PostgreSQLStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+func (ps *PostgreSQLStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
 	tx, err := ps.DB.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
+	res := make([]models.APIBatchResponse, 0, len(urls))
+
 	for _, urlModel := range urls {
-		_, err = tx.Exec(`INSERT INTO urls (short_url, original_url) VALUES ($1, $2)`, urlModel.Hash, urlModel.OriginalURL)
+		_, err = tx.Exec(`INSERT INTO urls (short_url, original_url) VALUES ($1, $2) ON CONFLICT (original_url) DO NOTHING`, urlModel.Hash, urlModel.OriginalURL)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		res = append(res, models.APIBatchResponse{CorrelationID: urlModel.CorrelationID, ShortURL: urlModel.ShortURL})
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return res, nil
 }
 
 func InitDB(ctx context.Context, dsn string) (*sql.DB, error) {
@@ -95,7 +111,7 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 	query := `
     CREATE TABLE IF NOT EXISTS urls (
         uuid  BIGSERIAL primary key,
-        original_url TEXT NOT NULL,
+        original_url TEXT NOT NULL UNIQUE,
         short_url VARCHAR(50) NOT NULL,
 		active BOOLEAN DEFAULT TRUE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -104,5 +120,20 @@ func initSchema(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
+}
+
+func (error *URLExistsError) Error() string {
+	return error.Err
+}
+
+func (ps *PostgreSQLStorage) NewURLExistsError(originalURL string, err error) *URLExistsError {
+	var short string
+	row := ps.DB.QueryRow(`SELECT short_url FROM urls WHERE original_url = $1;`, originalURL)
+	qErr := row.Scan(&short)
+	if qErr != nil {
+		return &URLExistsError{ShortURL: "", Err: "Error on quering existing url"}
+	}
+	return &URLExistsError{ShortURL: short, Err: "URL already exists"}
 }

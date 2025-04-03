@@ -21,7 +21,7 @@ type Storage interface {
 	GetFullURL(shortURL string) (fullURL string, isExist bool)
 	AddShortURL(fullURL string, cfg *config.Config) (shortURL string, err error)
 	Ping(ctx context.Context) error
-	AddBatch(urls []models.APIBatchModel, cfg *config.Config) error
+	AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error)
 }
 
 type MapStorage struct {
@@ -79,24 +79,27 @@ func (s *MapStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *MapStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) error {
+func (s *MapStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
 	writer, err := NewWriter(cfg.StorageFilePath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer writer.Close()
 
-	for _, url := range urls {
-		s.URLdata[url.Hash] = url.OriginalURL
-		urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: url.Hash, OriginalURL: url.OriginalURL}
+	res := make([]models.APIBatchResponse, 0, len(urls))
+
+	for _, urlModel := range urls {
+		s.URLdata[urlModel.Hash] = urlModel.OriginalURL
+		urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: urlModel.Hash, OriginalURL: urlModel.OriginalURL}
 		if err = writer.WriteData(&urlData); err != nil {
-			return err
+			return nil, err
 		}
+		res = append(res, models.APIBatchResponse{CorrelationID: urlModel.CorrelationID, ShortURL: urlModel.ShortURL})
 	}
-	return nil
+	return res, nil
 }
 
 func LoadFromFile(s *MapStorage, cfg *config.Config) error {
