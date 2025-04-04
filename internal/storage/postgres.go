@@ -99,30 +99,9 @@ func InitDB(ctx context.Context, dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	// err = initSchema(ctx, db)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	logging.Log.Info("Database setup complete")
 	return db, nil
 }
-
-// func initSchema(ctx context.Context, db *sql.DB) error {
-// 	query := `
-//     CREATE TABLE IF NOT EXISTS urls (
-//         uuid  BIGSERIAL primary key,
-//         original_url TEXT NOT NULL UNIQUE,
-//         short_url VARCHAR(50) NOT NULL,
-// 		active BOOLEAN DEFAULT TRUE,
-// 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-//     );`
-// 	_, err := db.ExecContext(ctx, query)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
 
 func (error *URLExistsError) Error() string {
 	return error.Err
