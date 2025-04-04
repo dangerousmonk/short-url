@@ -3,6 +3,8 @@ package main
 import (
 	"compress/gzip"
 	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -13,6 +15,9 @@ import (
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -31,6 +36,7 @@ func main() {
 	ctx := context.Background()
 	var appStorage storage.Storage
 	if cfg.DatabaseDSN != "" {
+		applyMigrations(cfg)
 		db, err := storage.InitDB(ctx, cfg.DatabaseDSN)
 		if err != nil {
 			logger.Fatalf("Failed init postgresql: %v", err)
@@ -73,4 +79,22 @@ func main() {
 	if err != nil {
 		logger.Fatalf("App startup failed: %v", err)
 	}
+}
+
+func applyMigrations(cfg *config.Config) {
+	migrations, err := migrate.New("file://internal/storage/migrations", fmt.Sprintf("%s?sslmode=disable", cfg.DatabaseDSN))
+	if err != nil {
+		logging.Log.Fatalf("Failed to apply migrations: %v", err)
+	}
+	migrations.Up()
+
+	if err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			logging.Log.Info("Migrations no change")
+			return
+		}
+		log.Fatalf("Migrations failed: %v ", err)
+		return
+	}
+	logging.Log.Info(" Migrations: success")
 }
