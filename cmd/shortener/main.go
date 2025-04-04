@@ -4,7 +4,6 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -82,7 +81,8 @@ func main() {
 }
 
 func applyMigrations(cfg *config.Config) {
-	migrations, err := migrate.New("file://internal/storage/migrations", fmt.Sprintf("%s?sslmode=disable", cfg.DatabaseDSN))
+	logging.Log.Infof("DB DSN=%s", cfg.DatabaseDSN)
+	migrations, err := migrate.New("file://internal/storage/migrations", cfg.DatabaseDSN)
 	if err != nil {
 		logging.Log.Fatalf("Failed to apply migrations: %v", err)
 	}
