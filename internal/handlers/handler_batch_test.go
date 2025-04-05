@@ -65,9 +65,12 @@ func TestAPIShortenBatch(t *testing.T) {
 					Return(urls, nil)
 			},
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				res := w.Result()
+				defer res.Body.Close()
+
 				require.Equal(t, http.StatusCreated, w.Code)
 				require.NotEmpty(t, w.Body)
-				require.Equal(t, "application/json", w.Result().Header.Get("Content-Type"))
+				require.Equal(t, "application/json", res.Header.Get("Content-Type"))
 				requireBodyMatch(t, w.Body, urls)
 			},
 		},
