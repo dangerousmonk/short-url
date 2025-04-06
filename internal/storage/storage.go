@@ -19,13 +19,13 @@ type Row struct {
 //go:generate mockgen -package mocks -source storage.go -destination ./mocks/mock_storage.go Storage
 type Storage interface {
 	// GetFullURL retrieves the original URL by hash
-	GetFullURL(shortURL string) (fullURL string, isExist bool)
+	GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool)
 	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
-	AddShortURL(fullURL string, cfg *config.Config) (shortURL string, err error)
+	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error)
 	// Ping checks whether internal storage is up and running
 	Ping(ctx context.Context) error
 	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
-	AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error)
+	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error)
 }
 
 type MapStorage struct {
@@ -41,7 +41,7 @@ func InitMapStorage(cfg *config.Config) *MapStorage {
 	}
 }
 
-func (s *MapStorage) GetFullURL(shortURL string) (fullURL string, isExist bool) {
+func (s *MapStorage) GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -49,7 +49,7 @@ func (s *MapStorage) GetFullURL(shortURL string) (fullURL string, isExist bool) 
 	return
 }
 
-func (s *MapStorage) AddShortURL(fullURL string, cfg *config.Config) (shortURL string, err error) {
+func (s *MapStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -83,7 +83,7 @@ func (s *MapStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *MapStorage) AddBatch(urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
+func (s *MapStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

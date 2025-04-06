@@ -57,7 +57,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.Storage.AddShortURL(fullURL, h.Config)
+	shortURL, err := h.Storage.AddShortURL(req.Context(), fullURL, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
 		var existsErr *storage.URLExistsError
@@ -78,7 +78,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	hash := chi.URLParam(req, "hash")
-	fullURL, isExist := h.Storage.GetFullURL(hash)
+	fullURL, isExist := h.Storage.GetFullURL(req.Context(), hash)
 	if !isExist {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
@@ -105,7 +105,7 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.Storage.AddShortURL(r.URL, h.Config)
+	shortURL, err := h.Storage.AddShortURL(req.Context(), r.URL, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
 		var existsErr *storage.URLExistsError
@@ -183,7 +183,7 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		urls[idx].Hash = hash
 	}
 
-	resp, err := h.Storage.AddBatch(urls, h.Config)
+	resp, err := h.Storage.AddBatch(req.Context(), urls, h.Config)
 	if err != nil {
 		logging.Log.Warnf("Error on saving to storage | method=%v | url=%v | err=%v", req.Method, req.URL, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -76,7 +76,7 @@ func TestURLShortenerHandler(t *testing.T) {
 
 				shortURL := string(body)
 				hash := strings.TrimPrefix(shortURL, cfg.BaseURL+"/")
-				fullURL, isExist := storage.GetFullURL(hash)
+				fullURL, isExist := storage.GetFullURL(req.Context(), hash)
 
 				require.Equal(t, test.body, fullURL, "Сохраненый URL не совпадает с ожидаемым")
 				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
@@ -209,7 +209,7 @@ func TestAPIShortenerHandler(t *testing.T) {
 				json.NewDecoder(result.Body).Decode(&response)
 
 				hash := strings.TrimPrefix(response.Result, cfg.BaseURL+"/")
-				fullURL, isExist := storage.GetFullURL(hash)
+				fullURL, isExist := storage.GetFullURL(testReq.Context(), hash)
 
 				require.Equal(t, req.URL, fullURL, "Сохраненый URL не совпадает с ожидаемым")
 				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")

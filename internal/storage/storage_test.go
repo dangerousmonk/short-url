@@ -68,9 +68,9 @@ func TestGetFullURLOk(t *testing.T) {
 
 	m := mocks.NewMockStorage(mockCtrl)
 	fullURL := "https://example.com"
-	m.EXPECT().GetFullURL("c2a3c895").Return(fullURL, true)
+	m.EXPECT().GetFullURL(context.Background(), "c2a3c895").Return(fullURL, true)
 
-	full, exists := Storage.GetFullURL(m, "c2a3c895")
+	full, exists := Storage.GetFullURL(m, context.Background(), "c2a3c895")
 	require.Equal(t, full, fullURL)
 	require.True(t, exists)
 }
@@ -80,9 +80,9 @@ func TestGetFullURLNotFound(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	m := mocks.NewMockStorage(mockCtrl)
-	m.EXPECT().GetFullURL("fake").Return("", false)
+	m.EXPECT().GetFullURL(gomock.Any(), "fake").Return("", false)
 
-	full, exists := m.GetFullURL("fake")
+	full, exists := m.GetFullURL(context.Background(), "fake")
 
 	require.Empty(t, full)
 	require.False(t, exists)
@@ -98,9 +98,9 @@ func TestAddShortURLOk(t *testing.T) {
 	mockCfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	m.EXPECT().AddShortURL(fullURL, mockCfg).Return(hash, nil)
+	m.EXPECT().AddShortURL(context.Background(), fullURL, mockCfg).Return(hash, nil)
 
-	short, err := Storage.AddShortURL(m, fullURL, mockCfg)
+	short, err := Storage.AddShortURL(m, context.Background(), fullURL, mockCfg)
 	require.Equal(t, hash, short)
 	require.NoError(t, err)
 }
@@ -114,9 +114,9 @@ func TestAddShortURLError(t *testing.T) {
 	mockCfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	m.EXPECT().AddShortURL(fullURL, mockCfg).Return("", errors.New("invalid URL"))
+	m.EXPECT().AddShortURL(context.Background(), fullURL, mockCfg).Return("", errors.New("invalid URL"))
 
-	short, err := m.AddShortURL(fullURL, mockCfg)
+	short, err := m.AddShortURL(context.Background(), fullURL, mockCfg)
 
 	require.Empty(t, short)
 	require.Error(t, err)
