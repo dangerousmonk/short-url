@@ -82,18 +82,18 @@ func (mr *MockStorageMockRecorder) GetFullURL(ctx, shortURL interface{}) *gomock
 }
 
 // GetUsersURLs mocks base method.
-func (m *MockStorage) GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error) {
+func (m *MockStorage) GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUsersURLs", ctx, userId, baseURL)
+	ret := m.ctrl.Call(m, "GetUsersURLs", ctx, userID, baseURL)
 	ret0, _ := ret[0].([]models.APIGetUserURLsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetUsersURLs indicates an expected call of GetUsersURLs.
-func (mr *MockStorageMockRecorder) GetUsersURLs(ctx, userId, baseURL interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) GetUsersURLs(ctx, userID, baseURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersURLs", reflect.TypeOf((*MockStorage)(nil).GetUsersURLs), ctx, userId, baseURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersURLs", reflect.TypeOf((*MockStorage)(nil).GetUsersURLs), ctx, userID, baseURL)
 }
 
 // Ping mocks base method.

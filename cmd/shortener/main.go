@@ -79,7 +79,7 @@ func main() {
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(auth.CookieAuthMiddleware)
+		r.Use(auth.AuthMiddleware)
 		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
 	})
 

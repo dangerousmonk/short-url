@@ -28,7 +28,7 @@ type Storage interface {
 	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
 	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error)
 	// GetUsersURLs retrieves all saved URLs by specific user
-	GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error)
+	GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error)
 }
 
 type MapStorage struct {
@@ -126,6 +126,6 @@ func LoadFromFile(s *MapStorage, cfg *config.Config) error {
 	return nil
 }
 
-func (s *MapStorage) GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error) {
+func (s *MapStorage) GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error) {
 	return nil, errors.New("mapStorage doesnt support GetUsersURLs method")
 }
