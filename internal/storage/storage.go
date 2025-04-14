@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"sync"
 
@@ -21,11 +22,13 @@ type Storage interface {
 	// GetFullURL retrieves the original URL by hash
 	GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool)
 	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
-	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error)
+	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error)
 	// Ping checks whether internal storage is up and running
 	Ping(ctx context.Context) error
 	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
-	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error)
+	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error)
+	// GetUsersURLs retrieves all saved URLs by specific user
+	GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error)
 }
 
 type MapStorage struct {
@@ -49,7 +52,7 @@ func (s *MapStorage) GetFullURL(ctx context.Context, shortURL string) (fullURL s
 	return
 }
 
-func (s *MapStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error) {
+func (s *MapStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -83,7 +86,7 @@ func (s *MapStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *MapStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
+func (s *MapStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -121,4 +124,8 @@ func LoadFromFile(s *MapStorage, cfg *config.Config) error {
 		return err
 	}
 	return nil
+}
+
+func (s *MapStorage) GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error) {
+	return nil, errors.New("mapStorage doesnt support GetUsersURLs method")
 }

@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/compress"
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
@@ -65,12 +66,22 @@ func main() {
 	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, Storage: appStorage}
 	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
 	apiBatchHandler := handlers.APIShortenBatchHandler{Config: cfg, Storage: appStorage}
+	apiGetUserURLsHandler := handlers.APIGetUserURLsHandler{Config: cfg, Storage: appStorage}
 
-	r.Get("/ping", pingHandler.ServeHTTP)
 	r.Post("/", shortenHandler.ServeHTTP)
-	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
-	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
-	r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
+	r.Get("/ping", pingHandler.ServeHTTP)
+
+	r.Group(func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
+		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
+		r.Get("/{hash}", getFullURLHandler.ServeHTTP)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(auth.CookieAuthMiddleware)
+		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
+	})
 
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 

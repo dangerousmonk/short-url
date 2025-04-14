@@ -37,33 +37,33 @@ func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 }
 
 // AddBatch mocks base method.
-func (m *MockStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
+func (m *MockStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddBatch", ctx, urls, cfg)
+	ret := m.ctrl.Call(m, "AddBatch", ctx, urls, cfg, userID)
 	ret0, _ := ret[0].([]models.APIBatchResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddBatch indicates an expected call of AddBatch.
-func (mr *MockStorageMockRecorder) AddBatch(ctx, urls, cfg interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) AddBatch(ctx, urls, cfg, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockStorage)(nil).AddBatch), ctx, urls, cfg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddBatch", reflect.TypeOf((*MockStorage)(nil).AddBatch), ctx, urls, cfg, userID)
 }
 
 // AddShortURL mocks base method.
-func (m *MockStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (string, error) {
+func (m *MockStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddShortURL", ctx, fullURL, cfg)
+	ret := m.ctrl.Call(m, "AddShortURL", ctx, fullURL, cfg, userID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddShortURL indicates an expected call of AddShortURL.
-func (mr *MockStorageMockRecorder) AddShortURL(ctx, fullURL, cfg interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) AddShortURL(ctx, fullURL, cfg, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockStorage)(nil).AddShortURL), ctx, fullURL, cfg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockStorage)(nil).AddShortURL), ctx, fullURL, cfg, userID)
 }
 
 // GetFullURL mocks base method.
@@ -79,6 +79,21 @@ func (m *MockStorage) GetFullURL(ctx context.Context, shortURL string) (string, 
 func (mr *MockStorageMockRecorder) GetFullURL(ctx, shortURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullURL", reflect.TypeOf((*MockStorage)(nil).GetFullURL), ctx, shortURL)
+}
+
+// GetUsersURLs mocks base method.
+func (m *MockStorage) GetUsersURLs(ctx context.Context, userId, baseURL string) ([]models.APIGetUserURLsResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsersURLs", ctx, userId, baseURL)
+	ret0, _ := ret[0].([]models.APIGetUserURLsResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUsersURLs indicates an expected call of GetUsersURLs.
+func (mr *MockStorageMockRecorder) GetUsersURLs(ctx, userId, baseURL interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsersURLs", reflect.TypeOf((*MockStorage)(nil).GetUsersURLs), ctx, userId, baseURL)
 }
 
 // Ping mocks base method.

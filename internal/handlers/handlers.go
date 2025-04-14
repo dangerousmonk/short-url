@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/helpers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
@@ -42,11 +43,21 @@ type APIShortenBatchHandler struct {
 	Storage storage.Storage
 }
 
+type APIGetUserURLsHandler struct {
+	Config  *config.Config
+	Storage storage.Storage
+}
+
 func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "Invalid body", http.StatusBadRequest)
 		return
+	}
+
+	userID := req.Header.Get(auth.UserIDHeaderName)
+	if userID == "" {
+		logging.Log.Warnf("No userID in headers")
 	}
 
 	defer req.Body.Close()
@@ -57,7 +68,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.Storage.AddShortURL(req.Context(), fullURL, h.Config)
+	shortURL, err := h.Storage.AddShortURL(req.Context(), fullURL, h.Config, userID)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
 		var existsErr *storage.URLExistsError
@@ -98,6 +109,11 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
+	userID := req.Header.Get(auth.UserIDHeaderName)
+	if userID == "" {
+		logging.Log.Warnf("No userID in headers")
+	}
+
 	defer req.Body.Close()
 
 	if !helpers.IsURLValid(r.URL) {
@@ -105,7 +121,7 @@ func (h *APIShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	shortURL, err := h.Storage.AddShortURL(req.Context(), r.URL, h.Config)
+	shortURL, err := h.Storage.AddShortURL(req.Context(), r.URL, h.Config, userID)
 	if err != nil {
 		logging.Log.Warnf("Error on inserting URL | %v", err)
 		var existsErr *storage.URLExistsError
@@ -160,6 +176,12 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		http.Error(w, "Error on decoding body", http.StatusInternalServerError)
 		return
 	}
+
+	userID := req.Header.Get(auth.UserIDHeaderName)
+	if userID == "" {
+		logging.Log.Warnf("No userID in headers")
+	}
+
 	defer req.Body.Close()
 
 	if len(urls) == 0 {
@@ -183,7 +205,7 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		urls[idx].Hash = hash
 	}
 
-	resp, err := h.Storage.AddBatch(req.Context(), urls, h.Config)
+	resp, err := h.Storage.AddBatch(req.Context(), urls, h.Config, userID)
 	if err != nil {
 		logging.Log.Warnf("Error on saving to storage | method=%v | url=%v | err=%v", req.Method, req.URL, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -196,6 +218,38 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		logging.Log.Warnf("Error on encoding response | %v", err)
 		http.Error(w, "Error on encoding response", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *APIGetUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	userID := req.Header.Get(auth.UserIDHeaderName)
+	w.Header().Set("Content-Type", "application/json")
+
+	if userID == "" {
+		logging.Log.Infof("Invalid UserId | %v", userID)
+		http.Error(w, `{"error":" No UserId"}`, http.StatusUnauthorized)
+		return
+	}
+
+	userURLs, err := h.Storage.GetUsersURLs(req.Context(), userID, h.Config.BaseURL)
+	if err != nil {
+		logging.Log.Warnf("Error while fetching URLs | %v", err)
+		http.Error(w, `{"error":" Error while fetching URLs"}`, http.StatusInternalServerError)
+		return
+	}
+
+	if len(userURLs) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(userURLs); err != nil {
+		logging.Log.Warnf("Error on encoding response | %v", err)
+		http.Error(w, `{"error":" failed, to encode response"}`, http.StatusInternalServerError)
 		return
 	}
 

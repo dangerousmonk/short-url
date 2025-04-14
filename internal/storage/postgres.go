@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
@@ -51,7 +52,7 @@ func (ps *PostgreSQLStorage) GetFullURL(ctx context.Context, shortURL string) (f
 	return "", false
 }
 
-func (ps *PostgreSQLStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error) {
+func (ps *PostgreSQLStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error) {
 	shortURL, err = helpers.HashGenerator()
 	if err != nil {
 		return
@@ -60,7 +61,7 @@ func (ps *PostgreSQLStorage) AddShortURL(ctx context.Context, fullURL string, cf
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 
-	_, err = ps.DB.ExecContext(ctx, `INSERT INTO urls (short_url, original_url) VALUES ($1, $2)`, shortURL, fullURL)
+	_, err = ps.DB.ExecContext(ctx, `INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3)`, shortURL, fullURL, userID)
 	if err == nil {
 		return shortURL, nil
 	}
@@ -72,7 +73,7 @@ func (ps *PostgreSQLStorage) AddShortURL(ctx context.Context, fullURL string, cf
 	return "", err
 }
 
-func (ps *PostgreSQLStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
+func (ps *PostgreSQLStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error) {
 	tx, err := ps.DB.Begin()
 	if err != nil {
 		return nil, err
@@ -85,7 +86,13 @@ func (ps *PostgreSQLStorage) AddBatch(ctx context.Context, urls []models.APIBatc
 	defer cancel()
 
 	for _, urlModel := range urls {
-		_, err = tx.ExecContext(ctx, `INSERT INTO urls (short_url, original_url) VALUES ($1, $2) ON CONFLICT (original_url) DO NOTHING`, urlModel.Hash, urlModel.OriginalURL)
+		_, err = tx.ExecContext(
+			ctx,
+			`INSERT INTO urls (short_url, original_url, user_id) VALUES ($1, $2, $3) ON CONFLICT (original_url) DO NOTHING`,
+			urlModel.Hash,
+			urlModel.OriginalURL,
+			userID,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -128,4 +135,33 @@ func (ps *PostgreSQLStorage) NewURLExistsError(originalURL string, err error) *U
 		return &URLExistsError{ShortURL: "", Err: "Error on quering existing url"}
 	}
 	return &URLExistsError{ShortURL: short, Err: "URL already exists"}
+}
+
+func (ps *PostgreSQLStorage) GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
+	defer cancel()
+
+	var resultRows []models.APIGetUserURLsResponse
+
+	rows, err := ps.DB.QueryContext(ctx, `SELECT original_url, short_url FROM urls WHERE user_id=$1`, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var urlResponse models.APIGetUserURLsResponse
+		if err = rows.Scan(&urlResponse.OriginalURL, &urlResponse.ShortURL); err != nil {
+			return nil, err
+		}
+		urlResponse.ShortURL = fmt.Sprintf("%s/%s", baseURL, urlResponse.ShortURL)
+		resultRows = append(resultRows, urlResponse)
+
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return resultRows, nil
 }

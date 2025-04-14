@@ -28,4 +28,10 @@ type APIBatchModel struct {
 	OriginalURL   string `json:"original_url"`
 	ShortURL      string `json:"-"`
 	Hash          string `json:"-"`
+	UserID        string `json:"-"`
+}
+
+type APIGetUserURLsResponse struct {
+	OriginalURL string `json:"original_url"`
+	ShortURL    string `json:"short_url"`
 }

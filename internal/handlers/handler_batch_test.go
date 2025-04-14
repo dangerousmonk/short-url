@@ -61,7 +61,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			expectedCode: http.StatusCreated,
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
-					AddBatch(context.Background(), gomock.Any(), gomock.Any()).
+					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(urls, nil)
 			},
@@ -82,7 +82,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
-					AddBatch(context.Background(), gomock.Any(), gomock.Any()).
+					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -96,7 +96,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			expectedCode: http.StatusCreated,
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
-					AddBatch(context.Background(), gomock.Any(), gomock.Any()).
+					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(0)
 			},
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -110,7 +110,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			expectedCode: http.StatusCreated,
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
-					AddBatch(context.Background(), gomock.Any(), gomock.Any()).
+					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(nil, sql.ErrConnDone)
 			},
