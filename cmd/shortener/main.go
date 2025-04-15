@@ -68,7 +68,6 @@ func main() {
 	apiBatchHandler := handlers.APIShortenBatchHandler{Config: cfg, Storage: appStorage}
 	apiGetUserURLsHandler := handlers.APIGetUserURLsHandler{Config: cfg, Storage: appStorage}
 
-	r.Post("/", shortenHandler.ServeHTTP)
 	r.Get("/ping", pingHandler.ServeHTTP)
 
 	r.Group(func(r chi.Router) {
@@ -76,6 +75,7 @@ func main() {
 		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
 		r.Get("/{hash}", getFullURLHandler.ServeHTTP)
+		r.Post("/", shortenHandler.ServeHTTP)
 	})
 
 	r.Group(func(r chi.Router) {

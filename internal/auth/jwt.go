@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	tokenLifeTime = time.Hour * 3
+	tokenLifeTime = time.Hour * 24
 	secretKeySize = 32
 )
 
