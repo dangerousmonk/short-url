@@ -74,13 +74,9 @@ func main() {
 		r.Use(auth.AuthMiddleware)
 		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
+		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
 		r.Get("/{hash}", getFullURLHandler.ServeHTTP)
 		r.Post("/", shortenHandler.ServeHTTP)
-	})
-
-	r.Group(func(r chi.Router) {
-		r.Use(auth.AuthMiddleware)
-		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
 	})
 
 	logger.Infof("Running app on %s...", cfg.ServerAddr)

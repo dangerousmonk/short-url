@@ -14,33 +14,6 @@ const (
 	AuthHeaderName   = "Authorization"
 )
 
-func CookieAuthMiddleware(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		jwtAuthenticator, err := NewJWTAuthenticator(secretKey)
-		if err != nil {
-			logging.Log.Infof("Failed initialize jwtAuthenticator | %v", err)
-			http.Error(w, `{"error":" Failed initialize jwtAuthenticator"}`, http.StatusInternalServerError)
-			return
-		}
-
-		authCookie, err := r.Cookie(AuthCookieName)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		claims, err := jwtAuthenticator.ValidateToken(authCookie.Value)
-		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-		r.Header.Set(UserIDHeaderName, claims.UserID)
-		w.Header().Set(UserIDHeaderName, claims.UserID)
-		next.ServeHTTP(w, r)
-	}
-	return http.HandlerFunc(fn)
-}
-
 func AuthMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		jwtAuthenticator, err := NewJWTAuthenticator(secretKey)
@@ -85,12 +58,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Secure:   true,
 				Path:     "/",
 			})
+			w.Header().Set(AuthHeaderName, token)
 		} else {
 			userID = claims.UserID
 		}
-		w.Header().Set(AuthHeaderName, token)
-		w.Header().Set(UserIDHeaderName, userID)
 
+		w.Header().Set(UserIDHeaderName, userID)
 		r.Header.Set(UserIDHeaderName, userID)
 
 		next.ServeHTTP(w, r)
