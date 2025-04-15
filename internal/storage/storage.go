@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"context"
 	"strconv"
 	"sync"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/helpers"
+	"github.com/dangerousmonk/short-url/internal/models"
 )
 
 type Row struct {
@@ -14,26 +16,40 @@ type Row struct {
 	OriginalURL string `json:"original_url"`
 }
 
+//go:generate mockgen -package mocks -source storage.go -destination ./mocks/mock_storage.go Storage
+type Storage interface {
+	// GetFullURL retrieves the original URL by hash
+	GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool)
+	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
+	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error)
+	// Ping checks whether internal storage is up and running
+	Ping(ctx context.Context) error
+	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
+	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error)
+}
+
 type MapStorage struct {
 	URLdata map[string]string
 	mutex   sync.RWMutex
+	cfg     *config.Config
 }
 
-func NewMapStorage() *MapStorage {
+func InitMapStorage(cfg *config.Config) *MapStorage {
 	return &MapStorage{
 		URLdata: make(map[string]string),
+		cfg:     cfg,
 	}
 }
 
-func (s *MapStorage) GetFullURL(shortURL string) (FullURL string, isExist bool) {
+func (s *MapStorage) GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
-	FullURL, isExist = s.URLdata[shortURL]
-	return FullURL, isExist
+	fullURL, isExist = s.URLdata[shortURL]
+	return
 }
 
-func (s *MapStorage) AddShortURL(fullURL string, storagePath string) (shortURL string, err error) {
+func (s *MapStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config) (shortURL string, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -51,7 +67,7 @@ func (s *MapStorage) AddShortURL(fullURL string, storagePath string) (shortURL s
 	s.URLdata[shortURL] = fullURL
 	urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: shortURL, OriginalURL: fullURL}
 
-	writer, err := NewWriter(storagePath)
+	writer, err := NewWriter(cfg.StorageFilePath)
 	if err != nil {
 		return
 	}
@@ -63,7 +79,34 @@ func (s *MapStorage) AddShortURL(fullURL string, storagePath string) (shortURL s
 	return shortURL, nil
 }
 
-func (s *MapStorage) LoadFromFile(cfg *config.Config) error {
+func (s *MapStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (s *MapStorage) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config) ([]models.APIBatchResponse, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	writer, err := NewWriter(cfg.StorageFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer writer.Close()
+
+	res := make([]models.APIBatchResponse, 0, len(urls))
+
+	for _, urlModel := range urls {
+		s.URLdata[urlModel.Hash] = urlModel.OriginalURL
+		urlData := Row{UUID: strconv.Itoa(len(s.URLdata)), ShortURL: urlModel.Hash, OriginalURL: urlModel.OriginalURL}
+		if err = writer.WriteData(&urlData); err != nil {
+			return nil, err
+		}
+		res = append(res, models.APIBatchResponse{CorrelationID: urlModel.CorrelationID, ShortURL: urlModel.ShortURL})
+	}
+	return res, nil
+}
+
+func LoadFromFile(s *MapStorage, cfg *config.Config) error {
 	reader, err := NewFileReader(cfg.StorageFilePath)
 	if err != nil {
 		return err

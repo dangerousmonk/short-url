@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS urls (
+  uuid  BIGSERIAL primary key,
+  original_url TEXT NOT NULL UNIQUE,
+  short_url VARCHAR(50) NOT NULL,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
