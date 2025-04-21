@@ -6,12 +6,14 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/compress"
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
+	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -60,6 +62,8 @@ func main() {
 	r.Use(compress.DecompressMiddleware)
 	r.Use(compressor.Handler)
 
+	delCh := make(chan models.DeleteURLChannelMessage)
+
 	// handlers
 	pingHandler := handlers.PingHandler{Config: cfg, Storage: appStorage}
 	shortenHandler := handlers.URLShortenerHandler{Config: cfg, Storage: appStorage}
@@ -67,6 +71,7 @@ func main() {
 	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
 	apiBatchHandler := handlers.APIShortenBatchHandler{Config: cfg, Storage: appStorage}
 	apiGetUserURLsHandler := handlers.APIGetUserURLsHandler{Config: cfg, Storage: appStorage}
+	apiDeleteUserURLsHandler := handlers.APIDeleteUserURLsHandler{Config: cfg, Storage: appStorage, DoneCh: delCh}
 
 	r.Get("/ping", pingHandler.ServeHTTP)
 
@@ -75,12 +80,14 @@ func main() {
 		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
 		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
+		r.Delete("/api/user/urls", apiDeleteUserURLsHandler.ServeHTTP)
 		r.Get("/{hash}", getFullURLHandler.ServeHTTP)
 		r.Post("/", shortenHandler.ServeHTTP)
 	})
 
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 
+	go flushDeleteMessages(delCh, appStorage)
 	err = http.ListenAndServe(cfg.ServerAddr, r)
 	if err != nil {
 		logger.Fatalf("App startup failed: %v", err)
@@ -104,4 +111,26 @@ func applyMigrations(cfg *config.Config) {
 		return
 	}
 	logging.Log.Info(" Migrations: success")
+}
+
+func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage storage.Storage) {
+	ticker := time.NewTicker(10 * time.Second)
+
+	var messages []models.DeleteURLChannelMessage
+
+	for {
+		select {
+		case msg := <-inCh:
+			messages = append(messages, msg)
+		case <-ticker.C:
+			if len(messages) == 0 {
+				continue
+			}
+			err := storage.DeleteBatch(context.TODO(), messages)
+			if err != nil {
+				continue
+			}
+			messages = nil
+		}
+	}
 }

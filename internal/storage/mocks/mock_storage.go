@@ -66,19 +66,33 @@ func (mr *MockStorageMockRecorder) AddShortURL(ctx, fullURL, cfg, userID interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockStorage)(nil).AddShortURL), ctx, fullURL, cfg, userID)
 }
 
-// GetFullURL mocks base method.
-func (m *MockStorage) GetFullURL(ctx context.Context, shortURL string) (string, bool) {
+// DeleteBatch mocks base method.
+func (m *MockStorage) DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFullURL", ctx, shortURL)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "DeleteBatch", ctx, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteBatch indicates an expected call of DeleteBatch.
+func (mr *MockStorageMockRecorder) DeleteBatch(ctx, urls interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBatch", reflect.TypeOf((*MockStorage)(nil).DeleteBatch), ctx, urls)
+}
+
+// GetURLData mocks base method.
+func (m *MockStorage) GetURLData(ctx context.Context, shortURL string) (models.URLData, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURLData", ctx, shortURL)
+	ret0, _ := ret[0].(models.URLData)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
-// GetFullURL indicates an expected call of GetFullURL.
-func (mr *MockStorageMockRecorder) GetFullURL(ctx, shortURL interface{}) *gomock.Call {
+// GetURLData indicates an expected call of GetURLData.
+func (mr *MockStorageMockRecorder) GetURLData(ctx, shortURL interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFullURL", reflect.TypeOf((*MockStorage)(nil).GetFullURL), ctx, shortURL)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLData", reflect.TypeOf((*MockStorage)(nil).GetURLData), ctx, shortURL)
 }
 
 // GetUsersURLs mocks base method.

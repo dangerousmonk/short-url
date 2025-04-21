@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -24,6 +25,9 @@ func TestURLShortenerHandler(t *testing.T) {
 	}
 	defer os.Remove(tempFile.Name())
 
+	_, err = logging.InitLogger("INFO", "dev")
+	require.NoError(t, err)
+
 	type expected struct {
 		statusCode  int
 		contentType string
@@ -33,7 +37,7 @@ func TestURLShortenerHandler(t *testing.T) {
 		StorageFilePath: tempFile.Name(),
 	}
 	storage := &storage.MapStorage{
-		URLdata: make(map[string]string),
+		MemoryStorage: make(map[string]string),
 	}
 
 	cases := []struct {
@@ -76,9 +80,9 @@ func TestURLShortenerHandler(t *testing.T) {
 
 				shortURL := string(body)
 				hash := strings.TrimPrefix(shortURL, cfg.BaseURL+"/")
-				fullURL, isExist := storage.GetFullURL(req.Context(), hash)
+				urlData, isExist := storage.GetURLData(req.Context(), hash)
 
-				require.Equal(t, test.body, fullURL, "Сохраненый URL не совпадает с ожидаемым")
+				require.Equal(t, test.body, urlData.OriginalURL, "Сохраненый URL не совпадает с ожидаемым")
 				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
 
 				err = result.Body.Close()
@@ -97,9 +101,11 @@ func TestGetFullURLHandler(t *testing.T) {
 		BaseURL:    "http://localhost:8080",
 		ServerAddr: "http://localhost:8080",
 	}
+	_, err := logging.InitLogger("INFO", "dev")
+	require.NoError(t, err)
 	storage := storage.InitMapStorage(&cfg)
-	storage.URLdata["dfccf368"] = "https://example.com"
-	storage.URLdata["65f7ae83"] = "https://www.google.com"
+	storage.MemoryStorage["dfccf368"] = "https://example.com"
+	storage.MemoryStorage["65f7ae83"] = "https://www.google.com"
 
 	getURLhandler := GetFullURLHandler{Config: &cfg, Storage: storage}
 
@@ -153,6 +159,9 @@ func TestAPIShortenerHandler(t *testing.T) {
 	}
 	defer os.Remove(tempFile.Name())
 
+	_, err = logging.InitLogger("INFO", "dev")
+	require.NoError(t, err)
+
 	type expected struct {
 		statusCode  int
 		contentType string
@@ -162,7 +171,7 @@ func TestAPIShortenerHandler(t *testing.T) {
 		StorageFilePath: tempFile.Name(),
 	}
 	storage := &storage.MapStorage{
-		URLdata: make(map[string]string),
+		MemoryStorage: make(map[string]string),
 	}
 
 	cases := []struct {
@@ -209,9 +218,9 @@ func TestAPIShortenerHandler(t *testing.T) {
 				json.NewDecoder(result.Body).Decode(&response)
 
 				hash := strings.TrimPrefix(response.Result, cfg.BaseURL+"/")
-				fullURL, isExist := storage.GetFullURL(testReq.Context(), hash)
+				urlData, isExist := storage.GetURLData(testReq.Context(), hash)
 
-				require.Equal(t, req.URL, fullURL, "Сохраненый URL не совпадает с ожидаемым")
+				require.Equal(t, req.URL, urlData.OriginalURL, "Сохраненый URL не совпадает с ожидаемым")
 				require.True(t, isExist, "Флаг сохранения URL не совпадает с ожидаемым")
 
 			}

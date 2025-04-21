@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -54,12 +55,12 @@ func TestLoadFromFile(t *testing.T) {
 	require.NoError(t, err, "Error on LoadFromFile")
 
 	for _, row := range expectedRows {
-		actualURL, ok := mapStorage.URLdata[row.ShortURL]
+		actualURL, ok := mapStorage.MemoryStorage[row.ShortURL]
 		assert.True(t, ok, "Expected url missing")
 		require.Equal(t, row.OriginalURL, actualURL, "Save URL differ from expected")
 	}
 
-	require.Equal(t, len(mapStorage.URLdata), len(expectedRows), "Diffrent number of rows")
+	require.Equal(t, len(mapStorage.MemoryStorage), len(expectedRows), "Diffrent number of rows")
 }
 
 func TestGetFullURLOk(t *testing.T) {
@@ -68,10 +69,10 @@ func TestGetFullURLOk(t *testing.T) {
 
 	m := mocks.NewMockStorage(mockCtrl)
 	fullURL := "https://example.com"
-	m.EXPECT().GetFullURL(context.Background(), "c2a3c895").Return(fullURL, true)
+	m.EXPECT().GetURLData(context.Background(), "c2a3c895").Return(models.URLData{OriginalURL: fullURL}, true)
 
-	full, exists := Storage.GetFullURL(m, context.Background(), "c2a3c895")
-	require.Equal(t, full, fullURL)
+	urlData, exists := Storage.GetURLData(m, context.Background(), "c2a3c895")
+	require.Equal(t, urlData.OriginalURL, fullURL)
 	require.True(t, exists)
 }
 
@@ -80,11 +81,11 @@ func TestGetFullURLNotFound(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	m := mocks.NewMockStorage(mockCtrl)
-	m.EXPECT().GetFullURL(gomock.Any(), "fake").Return("", false)
+	m.EXPECT().GetURLData(gomock.Any(), "fake").Return(models.URLData{}, false)
 
-	full, exists := m.GetFullURL(context.Background(), "fake")
+	urlData, exists := m.GetURLData(context.Background(), "fake")
 
-	require.Empty(t, full)
+	require.Empty(t, urlData.OriginalURL)
 	require.False(t, exists)
 }
 

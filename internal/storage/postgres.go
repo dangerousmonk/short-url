@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
@@ -34,22 +35,22 @@ func (ps *PostgreSQLStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (ps *PostgreSQLStorage) GetFullURL(ctx context.Context, shortURL string) (fullURL string, isExist bool) {
+func (ps *PostgreSQLStorage) GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 
 	row := ps.DB.QueryRowContext(ctx, `SELECT uuid, original_url, short_url, active, created_at FROM urls WHERE short_url=$1`, shortURL)
-	var urlInfo models.URLInfo
-	err := row.Scan(&urlInfo.UUID, &urlInfo.OriginalURL, &urlInfo.ShortURL, &urlInfo.Active, &urlInfo.CreatedAt)
+	var urlData models.URLData
+	err := row.Scan(&urlData.UUID, &urlData.OriginalURL, &urlData.ShortURL, &urlData.Active, &urlData.CreatedAt)
 
 	if err == nil {
-		return urlInfo.OriginalURL, true
+		return urlData, true
 	}
 	if err == sql.ErrNoRows {
-		return "", false
+		return urlData, false
 	}
 	logging.Log.Warnf("Error fetching URL | %v", err)
-	return "", false
+	return urlData, false
 }
 
 func (ps *PostgreSQLStorage) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error) {
@@ -151,10 +152,10 @@ func (ps *PostgreSQLStorage) GetUsersURLs(ctx context.Context, userID, baseURL s
 
 	for rows.Next() {
 		var urlResponse models.APIGetUserURLsResponse
-		if err = rows.Scan(&urlResponse.OriginalURL, &urlResponse.ShortURL); err != nil {
+		if err = rows.Scan(&urlResponse.OriginalURL, &urlResponse.Hash); err != nil {
 			return nil, err
 		}
-		urlResponse.ShortURL = fmt.Sprintf("%s/%s", baseURL, urlResponse.ShortURL)
+		urlResponse.ShortURL = fmt.Sprintf("%s/%s", baseURL, urlResponse.Hash)
 		resultRows = append(resultRows, urlResponse)
 
 	}
@@ -164,4 +165,38 @@ func (ps *PostgreSQLStorage) GetUsersURLs(ctx context.Context, userID, baseURL s
 	}
 
 	return resultRows, nil
+}
+
+func (ps *PostgreSQLStorage) DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error {
+	var values []string
+	var args []any
+
+	for i, url := range urls {
+		values = append(values, fmt.Sprintf("$%d", i+1))
+		args = append(args, url.ShortURL)
+	}
+
+	query := `
+	 UPDATE urls
+	 SET active=false
+	 WHERE short_url IN
+	(` + strings.Join(values, ",") + `);`
+
+	tx, err := ps.DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+
 }

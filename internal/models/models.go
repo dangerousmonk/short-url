@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type Request struct {
 	URL string `json:"url"`
@@ -10,7 +13,7 @@ type Response struct {
 	Result string `json:"result"`
 }
 
-type URLInfo struct {
+type URLData struct {
 	UUID        int       `json:"uuid"`
 	OriginalURL string    `json:"original_url"`
 	ShortURL    string    `json:"short_url"`
@@ -34,4 +37,11 @@ type APIBatchModel struct {
 type APIGetUserURLsResponse struct {
 	OriginalURL string `json:"original_url"`
 	ShortURL    string `json:"short_url"`
+	Hash        string `json:"-"`
+}
+
+type DeleteURLChannelMessage struct {
+	Ctx      context.Context
+	ShortURL string
+	UserID   string
 }

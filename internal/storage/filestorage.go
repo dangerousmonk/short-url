@@ -50,7 +50,7 @@ func NewFileReader(fileName string) (*FileReader, error) {
 func (fr *FileReader) ReadData(s *MapStorage) (*Row, error) {
 	var row Row
 	for fr.decoder.Decode(&row) == nil {
-		s.URLdata[row.ShortURL] = row.OriginalURL
+		s.MemoryStorage[row.ShortURL] = row.OriginalURL
 	}
 	return &row, nil
 }
