@@ -61,6 +61,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			w.Header().Set(AuthHeaderName, token)
 		} else {
 			userID = claims.UserID
+			w.Header().Set(AuthHeaderName, token)
 		}
 
 		w.Header().Set(UserIDHeaderName, userID)
