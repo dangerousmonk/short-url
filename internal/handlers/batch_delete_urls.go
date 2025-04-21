@@ -19,8 +19,6 @@ type APIDeleteUserURLsHandler struct {
 
 func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	userID := req.Header.Get(auth.UserIDHeaderName)
-	logging.Log.Infof("APIDeleteUserURLsHandler UserId | %v", userID)
-
 	if userID == "" {
 		logging.Log.Infof("APIDeleteUserURLsHandler | Invalid UserId | %v", userID)
 		http.Error(w, `{"error":" No UserId"}`, http.StatusUnauthorized)
@@ -52,8 +50,6 @@ func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 	for _, urlData := range userURLs {
 		deleteMessages = append(deleteMessages, models.DeleteURLChannelMessage{Ctx: req.Context(), UserID: userID, ShortURL: urlData.Hash})
 	}
-
-	logging.Log.Infof("APIDeleteUserURLsHandler | deleteMessages | %v", deleteMessages)
 
 	for _, message := range deleteMessages {
 		h.DoneCh <- message
