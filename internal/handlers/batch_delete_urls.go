@@ -46,9 +46,18 @@ func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	userURLsMap := make(map[string]struct{})
+	for _, u := range userURLs {
+		userURLsMap[u.Hash] = struct{}{}
+	}
+
 	var deleteMessages []models.DeleteURLChannelMessage
-	for _, urlData := range userURLs {
-		deleteMessages = append(deleteMessages, models.DeleteURLChannelMessage{Ctx: req.Context(), UserID: userID, ShortURL: urlData.Hash})
+	for _, url := range urls {
+		_, ok := userURLsMap[url]
+		if !ok {
+			continue
+		}
+		deleteMessages = append(deleteMessages, models.DeleteURLChannelMessage{Ctx: req.Context(), UserID: userID, ShortURL: url})
 	}
 
 	for _, message := range deleteMessages {
