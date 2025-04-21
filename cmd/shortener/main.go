@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -114,7 +115,8 @@ func applyMigrations(cfg *config.Config) {
 }
 
 func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage storage.Storage) {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
 
 	var messages []models.DeleteURLChannelMessage
 
@@ -122,12 +124,17 @@ func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage stora
 		select {
 		case msg := <-inCh:
 			messages = append(messages, msg)
+			if len(messages) == 10 {
+				storage.DeleteBatch(context.TODO(), messages)
+				messages = nil
+			}
 		case <-ticker.C:
 			if len(messages) == 0 {
 				continue
 			}
 			err := storage.DeleteBatch(context.TODO(), messages)
 			if err != nil {
+				fmt.Printf("flushDeleteMessages error=%v", err)
 				continue
 			}
 			messages = nil
