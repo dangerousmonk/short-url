@@ -22,7 +22,7 @@ func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if !urlData.Active {
-		http.Error(w, `{"error":" not active URL"}`, http.StatusGone)
+		w.WriteHeader(http.StatusGone)
 		return
 	}
 
