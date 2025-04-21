@@ -114,7 +114,7 @@ func applyMigrations(cfg *config.Config) {
 }
 
 func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage storage.Storage) {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 
 	var messages []models.DeleteURLChannelMessage
 
