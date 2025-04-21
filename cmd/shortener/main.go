@@ -64,6 +64,7 @@ func main() {
 	r.Use(compressor.Handler)
 
 	delCh := make(chan models.DeleteURLChannelMessage)
+	go flushDeleteMessages(delCh, appStorage)
 
 	// handlers
 	pingHandler := handlers.PingHandler{Config: cfg, Storage: appStorage}
@@ -88,7 +89,6 @@ func main() {
 
 	logger.Infof("Running app on %s...", cfg.ServerAddr)
 
-	go flushDeleteMessages(delCh, appStorage)
 	err = http.ListenAndServe(cfg.ServerAddr, r)
 	if err != nil {
 		logger.Fatalf("App startup failed: %v", err)
