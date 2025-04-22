@@ -41,24 +41,24 @@ func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 
 	logging.Log.Infof("APIDeleteUserURLsHandler received urls to delete | %v", urls)
 
-	userURLs, err := h.Storage.GetUsersURLs(req.Context(), userID, h.Config.BaseURL)
-	if err != nil {
-		logging.Log.Warnf("APIDeleteUserURLsHandler error while checking URLs | %v", err)
-		http.Error(w, `{"error":" Error while checking URLs"}`, http.StatusInternalServerError)
-		return
-	}
+	// userURLs, err := h.Storage.GetUsersURLs(req.Context(), userID, h.Config.BaseURL)
+	// if err != nil {
+	// 	logging.Log.Warnf("APIDeleteUserURLsHandler error while checking URLs | %v", err)
+	// 	http.Error(w, `{"error":" Error while checking URLs"}`, http.StatusInternalServerError)
+	// 	return
+	// }
 
-	userURLsMap := make(map[string]struct{})
-	for _, u := range userURLs {
-		userURLsMap[u.Hash] = struct{}{}
-	}
+	// userURLsMap := make(map[string]struct{})
+	// for _, u := range userURLs {
+	// 	userURLsMap[u.Hash] = struct{}{}
+	// }
 
 	var deleteMessages []models.DeleteURLChannelMessage
 	for _, url := range urls {
-		_, ok := userURLsMap[url]
-		if !ok {
-			continue
-		}
+		// _, ok := userURLsMap[url]
+		// if !ok {
+		// 	continue
+		// }
 		deleteMessages = append(deleteMessages, models.DeleteURLChannelMessage{Ctx: req.Context(), UserID: userID, ShortURL: url})
 	}
 
