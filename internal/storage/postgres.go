@@ -167,33 +167,28 @@ func (ps *PostgreSQLStorage) GetUsersURLs(ctx context.Context, userID, baseURL s
 	return resultRows, nil
 }
 
-func (ps *PostgreSQLStorage) DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error {
-	var values []string
+func (ps *PostgreSQLStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	var args []any
 
+	placeholders := make([]string, len(urls))
 	for i, url := range urls {
-		values = append(values, fmt.Sprintf("$%d", i+1))
-		args = append(args, url.ShortURL)
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args = append(args, url)
 	}
+	args = append(args, userID)
 
-	query := `
+	query := fmt.Sprintf(`
 	 UPDATE urls
 	 SET active=false
-	 WHERE short_url IN
-	(` + strings.Join(values, ",") + `);`
+	 WHERE short_url IN (%s) AND user_id=$%d`,
+		strings.Join(placeholders, ","),
+		len(urls)+1,
+	)
 
-	tx, err := ps.DB.Begin()
+	logging.Log.Infof("DeleteBatch QUERY=%v", query)
+
+	_, err := ps.DB.ExecContext(ctx, query, args...)
 	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	_, err = tx.ExecContext(ctx, query, args...)
-	if err != nil {
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
 		return err
 	}
 

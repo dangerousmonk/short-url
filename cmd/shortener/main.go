@@ -63,7 +63,7 @@ func main() {
 	r.Use(compress.DecompressMiddleware)
 	r.Use(compressor.Handler)
 
-	delCh := make(chan models.DeleteURLChannelMessage, 1024)
+	delCh := make(chan models.DeleteURLChannelMessage)
 	go flushDeleteMessages(delCh, appStorage)
 
 	// handlers
@@ -128,10 +128,12 @@ func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage stora
 			if len(messages) == 0 {
 				continue
 			}
-			err := storage.DeleteBatch(context.TODO(), messages)
-			if err != nil {
-				fmt.Printf("flushDeleteMessages error=%v", err)
-				continue
+			for _, msg := range messages {
+				err := storage.DeleteBatch(context.TODO(), msg.URLs, msg.UserID)
+				if err != nil {
+					fmt.Printf("flushDeleteMessages error=%v", err)
+					continue
+				}
 			}
 			messages = nil
 		}

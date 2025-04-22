@@ -1,7 +1,6 @@
 package models
 
 import (
-	"context"
 	"time"
 )
 
@@ -41,7 +40,6 @@ type APIGetUserURLsResponse struct {
 }
 
 type DeleteURLChannelMessage struct {
-	Ctx      context.Context
-	ShortURL string
-	UserID   string
+	URLs   []string
+	UserID string
 }

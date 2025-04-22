@@ -67,17 +67,17 @@ func (mr *MockStorageMockRecorder) AddShortURL(ctx, fullURL, cfg, userID interfa
 }
 
 // DeleteBatch mocks base method.
-func (m *MockStorage) DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error {
+func (m *MockStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteBatch", ctx, urls)
+	ret := m.ctrl.Call(m, "DeleteBatch", ctx, urls, userID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteBatch indicates an expected call of DeleteBatch.
-func (mr *MockStorageMockRecorder) DeleteBatch(ctx, urls interface{}) *gomock.Call {
+func (mr *MockStorageMockRecorder) DeleteBatch(ctx, urls, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBatch", reflect.TypeOf((*MockStorage)(nil).DeleteBatch), ctx, urls)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBatch", reflect.TypeOf((*MockStorage)(nil).DeleteBatch), ctx, urls, userID)
 }
 
 // GetURLData mocks base method.

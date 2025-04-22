@@ -30,7 +30,7 @@ type Storage interface {
 	// GetUsersURLs retrieves all saved URLs by specific user
 	GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error)
 	// DeleteBatch marks multiple records as not active
-	DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error
+	DeleteBatch(ctx context.Context, urls []string, userID string) error
 }
 
 type MapStorage struct {
@@ -133,6 +133,6 @@ func (s *MapStorage) GetUsersURLs(ctx context.Context, userID, baseURL string) (
 	return nil, errors.New("mapStorage doesnt support GetUsersURLs method")
 }
 
-func (s *MapStorage) DeleteBatch(ctx context.Context, urls []models.DeleteURLChannelMessage) error {
+func (s *MapStorage) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	return errors.New("mapStorage doesnt support DeleteBatch method")
 }
