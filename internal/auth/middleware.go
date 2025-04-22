@@ -49,6 +49,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		var userID string
 
 		if err != nil {
+			logging.Log.Infof("AuthMiddleware ValidateToken err | %v", err)
 			userID = uuid.New().String()
 			logging.Log.Infof("AuthMiddleware generating new userID | %v", userID)
 			token, err := jwtAuthenticator.CreateToken(userID, tokenLifeTime)
