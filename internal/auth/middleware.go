@@ -23,20 +23,26 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		authHeader := r.Header.Get(AuthHeaderName)
 		var token string
-
-		switch authHeader {
-		case "":
-			cookie, err := r.Cookie(AuthCookieName)
-			if err != nil || cookie.Value == "" {
-				token = ""
-			} else {
-				token = cookie.Value
-			}
-		default:
-			token = authHeader
+		// authHeader := r.Header.Get(AuthHeaderName)
+		cookie, err := r.Cookie(AuthCookieName)
+		if err != nil || cookie.Value == "" {
+			token = ""
+		} else {
+			token = cookie.Value
 		}
+
+		// switch authHeader {
+		// case "":
+		// 	cookie, err := r.Cookie(AuthCookieName)
+		// 	if err != nil || cookie.Value == "" {
+		// 		token = ""
+		// 	} else {
+		// 		token = cookie.Value
+		// 	}
+		// default:
+		// 	token = authHeader
+		// }
 
 		claims, err := jwtAuthenticator.ValidateToken(token)
 
@@ -58,10 +64,10 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Secure:   true,
 				Path:     "/",
 			})
-			w.Header().Set(AuthHeaderName, token)
+			// w.Header().Set(AuthHeaderName, token)
 		} else {
 			userID = claims.UserID
-			w.Header().Set(AuthHeaderName, token)
+			// w.Header().Set(AuthHeaderName, token)
 		}
 
 		w.Header().Set(UserIDHeaderName, userID)
