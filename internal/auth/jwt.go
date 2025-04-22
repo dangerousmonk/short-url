@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -51,6 +52,7 @@ func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
+			logging.Log.Warnf("ValidateToken wrong signing method: %v", token.Header["alg"])
 			return nil, errInvalidToken
 		}
 		return []byte(maker.secretKey), nil

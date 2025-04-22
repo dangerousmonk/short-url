@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/internal/logging"
@@ -11,7 +12,6 @@ const (
 	secretKey        = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 	UserIDHeaderName = "x-user-id"
 	AuthCookieName   = "auth"
-	AuthHeaderName   = "Authorization"
 )
 
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -19,43 +19,25 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		jwtAuthenticator, err := NewJWTAuthenticator(secretKey)
 		if err != nil {
 			logging.Log.Infof("Failed initialize jwtAuthenticator | %v", err)
-			http.Error(w, `{"error":" Failed initialize jwtAuthenticator"}`, http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		var token string
-		// authHeader := r.Header.Get(AuthHeaderName)
 		cookie, err := r.Cookie(AuthCookieName)
-		if err != nil || cookie.Value == "" {
-			token = ""
-		} else {
-			token = cookie.Value
-		}
-
-		// switch authHeader {
-		// case "":
-		// 	cookie, err := r.Cookie(AuthCookieName)
-		// 	if err != nil || cookie.Value == "" {
-		// 		token = ""
-		// 	} else {
-		// 		token = cookie.Value
-		// 	}
-		// default:
-		// 	token = authHeader
-		// }
-
-		claims, err := jwtAuthenticator.ValidateToken(token)
-
-		var userID string
 
 		if err != nil {
-			logging.Log.Infof("AuthMiddleware ValidateToken err | %v", err)
-			userID = uuid.New().String()
-			logging.Log.Infof("AuthMiddleware generating new userID | %v", userID)
+			if !errors.Is(err, http.ErrNoCookie) {
+				logging.Log.Warnf("AuthMiddleware cookie err | %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			userID := uuid.New().String()
+			logging.Log.Infof("AuthMiddleware generated new userID | %v", userID)
 			token, err := jwtAuthenticator.CreateToken(userID, tokenLifeTime)
 			if err != nil {
-				logging.Log.Infof("Failed generate auth token | %v", err)
-				http.Error(w, `{"error":"Failed to generate auth token"}`, http.StatusInternalServerError)
+				logging.Log.Warnf("AuthMiddleware failed generate auth token | %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
@@ -66,15 +48,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				Secure:   true,
 				Path:     "/",
 			})
-			// w.Header().Set(AuthHeaderName, token)
+			r.Header.Set(UserIDHeaderName, userID)
 		} else {
+			claims, err := jwtAuthenticator.ValidateToken(cookie.Value)
+			if err != nil {
+				logging.Log.Warnf("AuthMiddleware ValidateToken error %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			userID := claims.UserID
 			logging.Log.Infof("AuthMiddleware found userID in cookie | %v", userID)
-			userID = claims.UserID
-			// w.Header().Set(AuthHeaderName, token)
+			r.Header.Set(UserIDHeaderName, userID)
 		}
-
-		w.Header().Set(UserIDHeaderName, userID)
-		r.Header.Set(UserIDHeaderName, userID)
 
 		next.ServeHTTP(w, r)
 	}
