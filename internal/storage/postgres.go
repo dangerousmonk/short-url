@@ -185,8 +185,6 @@ func (ps *PostgreSQLStorage) DeleteBatch(ctx context.Context, urls []string, use
 		len(urls)+1,
 	)
 
-	logging.Log.Infof("DeleteBatch QUERY=%v", query)
-
 	_, err := ps.DB.ExecContext(ctx, query, args...)
 	if err != nil {
 		return err

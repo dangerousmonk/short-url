@@ -14,7 +14,7 @@ import (
 type APIDeleteUserURLsHandler struct {
 	Config  *config.Config
 	Storage storage.Storage
-	DoneCh  chan models.DeleteURLChannelMessage
+	DelCh   chan models.DeleteURLChannelMessage
 }
 
 func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -39,10 +39,8 @@ func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	logging.Log.Infof("APIDeleteUserURLsHandler userId=%v urls to delete | %v", userID, urls)
-
 	message := models.DeleteURLChannelMessage{URLs: urls, UserID: userID}
-	h.DoneCh <- message
+	h.DelCh <- message
 
 	w.WriteHeader(http.StatusAccepted)
 }
