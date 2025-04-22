@@ -109,7 +109,7 @@ func (h *URLShortenerHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	logging.Log.Infof("Created url=%v", shortURL)
+	logging.Log.Infof("Created url=%v for userId=%v", shortURL, userID)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte(h.Config.BaseURL + "/" + shortURL))

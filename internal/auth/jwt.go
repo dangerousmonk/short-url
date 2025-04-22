@@ -42,6 +42,7 @@ type Authenticator interface {
 func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration) (string, error) {
 	claims, err := NewClaims(userID, duration)
 	if err != nil {
+		logging.Log.Warnf("CreateToken NewClaims err %v", err)
 		return "", nil
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
