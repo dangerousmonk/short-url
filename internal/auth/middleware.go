@@ -50,6 +50,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		if err != nil {
 			userID = uuid.New().String()
+			logging.Log.Infof("AuthMiddleware generating new userID | %v", userID)
 			token, err := jwtAuthenticator.CreateToken(userID, tokenLifeTime)
 			if err != nil {
 				logging.Log.Infof("Failed generate auth token | %v", err)
@@ -66,6 +67,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			})
 			// w.Header().Set(AuthHeaderName, token)
 		} else {
+			logging.Log.Infof("AuthMiddleware found userID in cookie | %v", userID)
 			userID = claims.UserID
 			// w.Header().Set(AuthHeaderName, token)
 		}

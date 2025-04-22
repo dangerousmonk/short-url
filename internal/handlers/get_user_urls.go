@@ -32,6 +32,8 @@ func (h *APIGetUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		return
 	}
 
+	logging.Log.Infof("APIGetUserURLsHandler UserId | %v", userID)
+
 	if len(userURLs) == 0 {
 		w.WriteHeader(http.StatusNoContent)
 		return
