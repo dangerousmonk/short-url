@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -22,6 +23,7 @@ func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if !urlData.Active {
+		logging.Log.Infof("GetFullURLHandler url not active | %v", urlData.Active)
 		w.WriteHeader(http.StatusGone)
 		return
 	}

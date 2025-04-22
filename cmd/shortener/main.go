@@ -63,7 +63,7 @@ func main() {
 	r.Use(compress.DecompressMiddleware)
 	r.Use(compressor.Handler)
 
-	delCh := make(chan models.DeleteURLChannelMessage)
+	delCh := make(chan models.DeleteURLChannelMessage, 1024)
 	go flushDeleteMessages(delCh, appStorage)
 
 	// handlers
@@ -115,7 +115,7 @@ func applyMigrations(cfg *config.Config) {
 }
 
 func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage storage.Storage) {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	var messages []models.DeleteURLChannelMessage
