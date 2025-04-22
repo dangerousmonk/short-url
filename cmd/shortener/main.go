@@ -124,10 +124,6 @@ func flushDeleteMessages(inCh chan models.DeleteURLChannelMessage, storage stora
 		select {
 		case msg := <-inCh:
 			messages = append(messages, msg)
-			if len(messages) == 10 {
-				storage.DeleteBatch(context.TODO(), messages)
-				messages = nil
-			}
 		case <-ticker.C:
 			if len(messages) == 0 {
 				continue

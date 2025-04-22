@@ -39,6 +39,8 @@ func (h *APIDeleteUserURLsHandler) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 
+	logging.Log.Infof("APIDeleteUserURLsHandler received urls to delete | %v", urls)
+
 	userURLs, err := h.Storage.GetUsersURLs(req.Context(), userID, h.Config.BaseURL)
 	if err != nil {
 		logging.Log.Warnf("APIDeleteUserURLsHandler error while checking URLs | %v", err)

@@ -23,7 +23,7 @@ func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) 
 	}
 
 	if !urlData.Active {
-		logging.Log.Infof("GetFullURLHandler url not active | %v", urlData.Active)
+		logging.Log.Infof("GetFullURLHandler url not active | %v", urlData.ShortURL)
 		w.WriteHeader(http.StatusGone)
 		return
 	}
