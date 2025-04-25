@@ -36,6 +36,12 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	defer req.Body.Close()
 
+	if len(urls) > h.Config.MaxURLsBatchSize {
+		logging.Log.Warnf("APIShortenBatchHandler too many URLs=%v, allowed size=%v", len(urls), h.Config.MaxURLsBatchSize)
+		http.Error(w, "Too many URLs", http.StatusRequestEntityTooLarge)
+		return
+	}
+
 	for _, url := range urls {
 		if helpers.IsURLValid(url.OriginalURL) {
 			validURLs = append(validURLs, url)

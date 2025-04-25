@@ -9,20 +9,22 @@ import (
 )
 
 const (
-	defaultServerAddr = "localhost:8080"
-	defaultBaseURL    = "http://localhost:8080"
-	defaultLogLevel   = "INFO"
-	defaultEnv        = "dev"
-	defaultFilePath   = "./internal/storage/storage.json"
+	defaultServerAddr       = "localhost:8080"
+	defaultBaseURL          = "http://localhost:8080"
+	defaultLogLevel         = "INFO"
+	defaultEnv              = "dev"
+	defaultFilePath         = "./internal/storage/storage.json"
+	defaultMaxURLsBatchSize = 5000
 )
 
 type Config struct {
-	ServerAddr      string
-	BaseURL         string
-	LogLevel        string
-	Env             string
-	StorageFilePath string
-	DatabaseDSN     string
+	ServerAddr       string
+	BaseURL          string
+	LogLevel         string
+	Env              string
+	StorageFilePath  string
+	DatabaseDSN      string
+	MaxURLsBatchSize int
 }
 
 func InitConfig() *Config {
@@ -80,5 +82,6 @@ func InitConfig() *Config {
 	if cfg.StorageFilePath == "" {
 		cfg.StorageFilePath = defaultFilePath
 	}
+	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
 	return cfg
 }

@@ -22,6 +22,7 @@ type PostgreSQLStorage struct {
 
 type URLExistsError struct {
 	ShortURL string
+	URL      string
 	Err      string
 }
 
@@ -39,9 +40,11 @@ func (ps *PostgreSQLStorage) GetURLData(ctx context.Context, shortURL string) (U
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()
 
-	row := ps.DB.QueryRowContext(ctx, `SELECT uuid, original_url, short_url, active, created_at FROM urls WHERE short_url=$1`, shortURL)
+	const selectFields = "original_url, short_url, active"
+	row := ps.DB.QueryRowContext(ctx, `SELECT `+selectFields+` FROM urls WHERE short_url=$1`, shortURL)
+
 	var urlData models.URLData
-	err := row.Scan(&urlData.UUID, &urlData.OriginalURL, &urlData.ShortURL, &urlData.Active, &urlData.CreatedAt)
+	err := row.Scan(&urlData.OriginalURL, &urlData.ShortURL, &urlData.Active)
 
 	if err == nil {
 		return urlData, true
@@ -133,9 +136,9 @@ func (ps *PostgreSQLStorage) NewURLExistsError(originalURL string, err error) *U
 	row := ps.DB.QueryRowContext(ctx, `SELECT short_url FROM urls WHERE original_url = $1;`, originalURL)
 	qErr := row.Scan(&short)
 	if qErr != nil {
-		return &URLExistsError{ShortURL: "", Err: "Error on quering existing url"}
+		return &URLExistsError{URL: originalURL, ShortURL: "", Err: "Error on querying existing url"}
 	}
-	return &URLExistsError{ShortURL: short, Err: "URL already exists"}
+	return &URLExistsError{URL: originalURL, ShortURL: short, Err: "URL already exists"}
 }
 
 func (ps *PostgreSQLStorage) GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error) {

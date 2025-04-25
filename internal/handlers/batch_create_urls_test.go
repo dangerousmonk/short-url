@@ -33,7 +33,7 @@ func TestAPIShortenBatch(t *testing.T) {
 	_, err := logging.InitLogger("INFO", "dev")
 	require.NoError(t, err)
 
-	cfg := config.Config{BaseURL: "http://localhost:8080"}
+	cfg := config.Config{BaseURL: "http://localhost:8080", MaxURLsBatchSize: 50}
 
 	urls := []models.APIBatchResponse{
 		{
