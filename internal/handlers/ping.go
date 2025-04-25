@@ -20,7 +20,7 @@ func (h *PingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer cancel()
 	err := h.Storage.Ping(ctx)
 	if err != nil {
-		logging.Log.Errorf("Database unreachable | %v", err)
+		logging.Log.Errorf("PingHandler database unreachable | %v", err)
 		http.Error(w, "Database unreachable", http.StatusInternalServerError)
 		return
 	}

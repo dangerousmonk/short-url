@@ -97,10 +97,28 @@ func TestAPIShortenBatch(t *testing.T) {
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Times(0)
+					Times(1).
+					Return([]models.APIBatchResponse{
+						{
+							CorrelationID: "3b936c58",
+							ShortURL:      "http://localhost:8080/cfb05b2a",
+						},
+					}, nil)
 			},
 			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusBadRequest, w.Code)
+				res := w.Result()
+				defer res.Body.Close()
+
+				require.Equal(t, http.StatusCreated, w.Code)
+				require.NotEmpty(t, w.Body)
+				require.Equal(t, "application/json", res.Header.Get("Content-Type"))
+
+				requireBodyMatch(t, w.Body, []models.APIBatchResponse{
+					{
+						CorrelationID: "3b936c58",
+						ShortURL:      "http://localhost:8080/cfb05b2a",
+					},
+				})
 			},
 		},
 		{

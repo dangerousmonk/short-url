@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
@@ -20,8 +19,9 @@ type APIShortenBatchHandler struct {
 
 func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var (
-		urls []models.APIBatchModel
-		resp []models.APIBatchResponse
+		urls      []models.APIBatchModel
+		validURLs []models.APIBatchModel
+		resp      []models.APIBatchResponse
 	)
 	if err := json.NewDecoder(req.Body).Decode(&urls); err != nil {
 		logging.Log.Warnf("Error on decoding body | method=%v | url=%v | err=%v", req.Method, req.URL, err)
@@ -36,16 +36,18 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	defer req.Body.Close()
 
-	if len(urls) == 0 {
-		http.Error(w, "No URLs in body", http.StatusBadRequest)
+	for _, url := range urls {
+		if helpers.IsURLValid(url.OriginalURL) {
+			validURLs = append(validURLs, url)
+		}
+	}
+
+	if len(validURLs) == 0 {
+		http.Error(w, "No valid URLs in body", http.StatusBadRequest)
 		return
 	}
 
-	for idx, url := range urls {
-		if !helpers.IsURLValid(url.OriginalURL) {
-			http.Error(w, fmt.Sprintf("Invalid URL: %s", url.OriginalURL), http.StatusBadRequest)
-			return
-		}
+	for idx := range validURLs {
 		hash, err := helpers.HashGenerator()
 		if err != nil {
 			logging.Log.Warnf("Error on generating hash | method=%v | url=%v | err=%v", req.Method, req.URL, err)
@@ -53,11 +55,11 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 			return
 		}
 		short := h.Config.BaseURL + "/" + hash
-		urls[idx].ShortURL = short
-		urls[idx].Hash = hash
+		validURLs[idx].ShortURL = short
+		validURLs[idx].Hash = hash
 	}
 
-	resp, err := h.Storage.AddBatch(req.Context(), urls, h.Config, userID)
+	resp, err := h.Storage.AddBatch(req.Context(), validURLs, h.Config, userID)
 	if err != nil {
 		logging.Log.Warnf("Error on saving to storage | method=%v | url=%v | err=%v", req.Method, req.URL, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
