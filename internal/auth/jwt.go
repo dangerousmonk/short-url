@@ -28,7 +28,7 @@ type JWTAuthenticator struct {
 }
 
 func (claims *Claims) Valid() error {
-	if time.Now().After(claims.ExpiresAt.Time) {
+	if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
 		return errExpiredToken
 	}
 	return nil
@@ -58,12 +58,9 @@ func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 		}
 		return []byte(maker.secretKey), nil
 	}
-	jwtToken, err := jwt.ParseWithClaims(token, claims, keyFunc)
+	_, err := jwt.ParseWithClaims(token, claims, keyFunc)
 	if err != nil {
 		return nil, err
-	}
-	if !jwtToken.Valid {
-		return nil, errInvalidToken
 	}
 	return claims, nil
 

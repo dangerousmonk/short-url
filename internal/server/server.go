@@ -48,6 +48,10 @@ func (server *ShortURLApp) Start() error {
 func (server *ShortURLApp) initRouter() *chi.Mux {
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
+	jwtAuthenticator, err := auth.NewJWTAuthenticator(server.Config.JWTSecret)
+	if err != nil {
+		logging.Log.Fatalf("Server failed initialize jwtAuthenticator | %v", err)
+	}
 
 	// middleware
 	r.Use(logging.RequestLogger)
@@ -66,7 +70,7 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 	r.Get("/ping", pingHandler.ServeHTTP)
 
 	r.Group(func(r chi.Router) {
-		r.Use(auth.AuthMiddleware)
+		r.Use(auth.AuthMiddleware(jwtAuthenticator))
 		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
 		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
 		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)

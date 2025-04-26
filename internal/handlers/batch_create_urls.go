@@ -25,7 +25,7 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 	)
 	if err := json.NewDecoder(req.Body).Decode(&urls); err != nil {
 		logging.Log.Warnf("Error on decoding body | method=%v | url=%v | err=%v", req.Method, req.URL, err)
-		http.Error(w, "Error on decoding body", http.StatusInternalServerError)
+		http.Error(w, "Error on decoding body", http.StatusBadRequest)
 		return
 	}
 

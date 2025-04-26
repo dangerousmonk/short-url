@@ -15,6 +15,7 @@ const (
 	defaultEnv              = "dev"
 	defaultFilePath         = "./internal/storage/storage.json"
 	defaultMaxURLsBatchSize = 5000
+	defaultJWTSecret        = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 )
 
 type Config struct {
@@ -25,6 +26,7 @@ type Config struct {
 	StorageFilePath  string
 	DatabaseDSN      string
 	MaxURLsBatchSize int
+	JWTSecret        string
 }
 
 func InitConfig() *Config {
@@ -83,5 +85,6 @@ func InitConfig() *Config {
 		cfg.StorageFilePath = defaultFilePath
 	}
 	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
+	cfg.JWTSecret = defaultJWTSecret
 	return cfg
 }
