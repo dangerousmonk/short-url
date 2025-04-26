@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/storage/mocks"
@@ -53,12 +54,29 @@ func TestAPIShortenBatch(t *testing.T) {
 		expectedCode  int
 		buildStubs    func(s *mocks.MockStorage)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
+		userHeader    string
 	}{
+		{
+			name:         "Request without headers",
+			method:       http.MethodPost,
+			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
+			expectedCode: http.StatusUnauthorized,
+			userHeader:   "",
+			buildStubs: func(s *mocks.MockStorage) {
+				s.EXPECT().
+					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Times(0)
+			},
+			checkResponse: func(t *testing.T, w *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusUnauthorized, w.Code)
+			},
+		},
 		{
 			name:         "OK",
 			method:       http.MethodPost,
 			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
+			userHeader:   "b714f6f3232240c48e56029c3e65730d",
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -80,6 +98,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			method:       http.MethodPost,
 			body:         `[]`,
 			expectedCode: http.StatusBadRequest,
+			userHeader:   "b714f6f3232240c48e56029c3e65730d",
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -94,6 +113,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			method:       http.MethodPost,
 			body:         `[{"correlation_id": "cea4eb67","original_url": ""}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
+			userHeader:   "b714f6f3232240c48e56029c3e65730d",
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -126,6 +146,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			method:       http.MethodPost,
 			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
+			userHeader:   "b714f6f3232240c48e56029c3e65730d",
 			buildStubs: func(s *mocks.MockStorage) {
 				s.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -149,6 +170,7 @@ func TestAPIShortenBatch(t *testing.T) {
 			tc.buildStubs(s)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(tc.body))
+			req.Header.Set(auth.UserIDHeaderName, tc.userHeader)
 			w := httptest.NewRecorder()
 
 			handler := APIShortenBatchHandler{Config: &cfg, Storage: s}
@@ -158,4 +180,5 @@ func TestAPIShortenBatch(t *testing.T) {
 			tc.checkResponse(t, w)
 		})
 	}
+
 }

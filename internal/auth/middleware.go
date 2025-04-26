@@ -24,34 +24,50 @@ func AuthMiddleware(authenticator Authenticator) func(http.Handler) http.Handler
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-
-				userID := uuid.New().String()
-				token, err := authenticator.CreateToken(userID, tokenLifeTime)
+				err = setCookie(authenticator, w, r)
 				if err != nil {
-					logging.Log.Warnf("AuthMiddleware failed generate auth token | %v", err)
+					logging.Log.Warnf("AuthMiddleware failed setCookie | %v", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-
-				http.SetCookie(w, &http.Cookie{
-					Name:  AuthCookieName,
-					Value: token,
-					Path:  "/",
-				})
-				r.Header.Set(UserIDHeaderName, userID)
 			} else {
-				claims, err := authenticator.ValidateToken(cookie.Value)
+				err = resolveCookie(authenticator, r, cookie)
 				if err != nil {
-					logging.Log.Warnf("AuthMiddleware ValidateToken error %v", err)
+					logging.Log.Warnf("AuthMiddleware resolveCookie error %v", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				userID := claims.UserID
-				r.Header.Set(UserIDHeaderName, userID)
 			}
 
 			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
 	}
+}
+
+func setCookie(auth Authenticator, w http.ResponseWriter, r *http.Request) error {
+	userID := uuid.New().String()
+	token, err := auth.CreateToken(userID, tokenLifeTime)
+	if err != nil {
+		logging.Log.Warnf("setCookie error %v", err)
+		return err
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:  AuthCookieName,
+		Value: token,
+		Path:  "/",
+	})
+	r.Header.Set(UserIDHeaderName, userID)
+	return nil
+}
+
+func resolveCookie(auth Authenticator, r *http.Request, cookie *http.Cookie) error {
+	claims, err := auth.ValidateToken(cookie.Value)
+	if err != nil {
+		return err
+	}
+	userID := claims.UserID
+	r.Header.Set(UserIDHeaderName, userID)
+	return nil
 }

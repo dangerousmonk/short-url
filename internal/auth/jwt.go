@@ -14,8 +14,9 @@ const (
 )
 
 var (
-	errExpiredToken = errors.New("token has expired")
-	errInvalidToken = errors.New("token is invalid")
+	errExpiredToken  = errors.New("token: has expired")
+	errInvalidToken  = errors.New("token: is invalid")
+	errInvalidClaims = errors.New("claims: failed to initialize")
 )
 
 type Claims struct {
@@ -43,11 +44,12 @@ func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration
 	claims, err := NewClaims(userID, duration)
 	if err != nil {
 		logging.Log.Warnf("CreateToken NewClaims err %v", err)
-		return "", nil
+		return "", errInvalidClaims
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(maker.secretKey))
 }
+
 func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 	claims := &Claims{}
 	keyFunc := func(token *jwt.Token) (interface{}, error) {

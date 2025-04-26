@@ -31,7 +31,9 @@ func (h *APIShortenBatchHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 
 	userID := req.Header.Get(auth.UserIDHeaderName)
 	if userID == "" {
-		logging.Log.Warnf("No userID in headers")
+		logging.Log.Warnf("No userID in headers=%v", req.Cookies())
+		http.Error(w, "No valid cookie provided", http.StatusUnauthorized)
+		return
 	}
 
 	defer req.Body.Close()
