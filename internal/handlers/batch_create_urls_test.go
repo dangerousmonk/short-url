@@ -15,7 +15,8 @@ import (
 	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
-	"github.com/dangerousmonk/short-url/internal/storage/mocks"
+	"github.com/dangerousmonk/short-url/internal/repository/mocks"
+	"github.com/dangerousmonk/short-url/internal/service"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -52,7 +53,7 @@ func TestAPIShortenBatch(t *testing.T) {
 		method        string
 		body          string
 		expectedCode  int
-		buildStubs    func(s *mocks.MockStorage)
+		buildStubs    func(s *mocks.MockRepository)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 		userHeader    string
 	}{
@@ -62,8 +63,8 @@ func TestAPIShortenBatch(t *testing.T) {
 			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusUnauthorized,
 			userHeader:   "",
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(0)
 			},
@@ -77,8 +78,8 @@ func TestAPIShortenBatch(t *testing.T) {
 			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
 			userHeader:   "b714f6f3232240c48e56029c3e65730d",
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(urls, nil)
@@ -99,8 +100,8 @@ func TestAPIShortenBatch(t *testing.T) {
 			body:         `[]`,
 			expectedCode: http.StatusBadRequest,
 			userHeader:   "b714f6f3232240c48e56029c3e65730d",
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(0)
 			},
@@ -114,8 +115,8 @@ func TestAPIShortenBatch(t *testing.T) {
 			body:         `[{"correlation_id": "cea4eb67","original_url": ""}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
 			userHeader:   "b714f6f3232240c48e56029c3e65730d",
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return([]models.APIBatchResponse{
@@ -147,8 +148,8 @@ func TestAPIShortenBatch(t *testing.T) {
 			body:         `[{"correlation_id": "cea4eb67","original_url": "https://stackoverflow.com"}, {"correlation_id": "3b936c58","original_url": "https://github.com"}]`,
 			expectedCode: http.StatusCreated,
 			userHeader:   "b714f6f3232240c48e56029c3e65730d",
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					AddBatch(context.Background(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Times(1).
 					Return(nil, sql.ErrConnDone)
@@ -166,15 +167,17 @@ func TestAPIShortenBatch(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			s := mocks.NewMockStorage(ctrl)
-			tc.buildStubs(s)
+			repo := mocks.NewMockRepository(ctrl)
+			tc.buildStubs(repo)
 
 			req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", strings.NewReader(tc.body))
 			req.Header.Set(auth.UserIDHeaderName, tc.userHeader)
 			w := httptest.NewRecorder()
 
-			handler := APIShortenBatchHandler{Config: &cfg, Storage: s}
-			handler.ServeHTTP(w, req)
+			service := service.URLShortenerService{Repo: repo, Cfg: &cfg, DelCh: make(chan models.DeleteURLChannelMessage)}
+
+			handler := NewHandler(service)
+			handler.APIShortenBatch(w, req)
 			require.NoError(t, err)
 
 			tc.checkResponse(t, w)

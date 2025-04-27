@@ -8,7 +8,9 @@ import (
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/logging"
-	"github.com/dangerousmonk/short-url/internal/storage/mocks"
+	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/repository/mocks"
+	"github.com/dangerousmonk/short-url/internal/service"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -22,14 +24,14 @@ func TestPing(t *testing.T) {
 	testCases := []struct {
 		name          string
 		method        string
-		buildStubs    func(s *mocks.MockStorage)
+		buildStubs    func(r *mocks.MockRepository)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 	}{
 		{
 			name:   "OK",
 			method: http.MethodGet,
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					Ping(gomock.Any()).
 					Times(1).
 					Return(nil)
@@ -45,8 +47,8 @@ func TestPing(t *testing.T) {
 		{
 			name:   "Database returned error",
 			method: http.MethodGet,
-			buildStubs: func(s *mocks.MockStorage) {
-				s.EXPECT().
+			buildStubs: func(r *mocks.MockRepository) {
+				r.EXPECT().
 					Ping(gomock.Any()).
 					Times(1).
 					Return(errors.New("Some DB error"))
@@ -68,14 +70,15 @@ func TestPing(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			s := mocks.NewMockStorage(ctrl)
-			tc.buildStubs(s)
+			repo := mocks.NewMockRepository(ctrl)
+			tc.buildStubs(repo)
 
 			req := httptest.NewRequest(tc.method, "/ping", nil)
 			w := httptest.NewRecorder()
+			service := service.URLShortenerService{Repo: repo, Cfg: &cfg, DelCh: make(chan models.DeleteURLChannelMessage)}
 
-			handler := PingHandler{Config: &cfg, Storage: s}
-			handler.ServeHTTP(w, req)
+			handler := NewHandler(service)
+			handler.Ping(w, req)
 			require.NoError(t, err)
 
 			tc.checkResponse(t, w)

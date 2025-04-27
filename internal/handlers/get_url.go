@@ -3,27 +3,20 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/logging"
-	"github.com/dangerousmonk/short-url/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
-type GetFullURLHandler struct {
-	Config  *config.Config
-	Storage storage.Storage
-}
-
-func (h *GetFullURLHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h *HTTPHandler) GetURL(w http.ResponseWriter, req *http.Request) {
 	hash := chi.URLParam(req, "hash")
-	urlData, isExist := h.Storage.GetURLData(req.Context(), hash)
+	urlData, isExist := h.service.GetURLData(req.Context(), hash)
 	if !isExist {
 		http.Error(w, "URL not found", http.StatusNotFound)
 		return
 	}
 
 	if !urlData.Active {
-		logging.Log.Infof("GetFullURLHandler url not active | %v", urlData.ShortURL)
+		logging.Log.Infof("GetURL url not active | %v", urlData.ShortURL)
 		w.WriteHeader(http.StatusGone)
 		return
 	}

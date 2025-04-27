@@ -2,18 +2,16 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/database"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/repository"
+	"github.com/dangerousmonk/short-url/internal/repository/memory"
 	"github.com/dangerousmonk/short-url/internal/server"
-	"github.com/dangerousmonk/short-url/internal/storage"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/dangerousmonk/short-url/internal/service"
 )
 
 func main() {
@@ -29,50 +27,33 @@ func main() {
 	}()
 
 	ctx := context.Background()
-	var appStorage storage.Storage
+	var appRepo repository.Repository
 	if cfg.DatabaseDSN != "" {
-		applyMigrations(cfg)
-		db, err := storage.InitDB(ctx, cfg.DatabaseDSN)
+		database.ApplyMigrations(cfg)
+		db, err := database.InitDB(ctx, cfg.DatabaseDSN)
 		if err != nil {
 			logger.Fatalf("Failed init postgresql: %v", err)
 		}
 		defer db.Close()
-		appStorage = &storage.PostgreSQLStorage{DB: db}
+		appRepo = repository.NewPostgresRepo(db)
 	} else {
-		mapStorage := storage.InitMapStorage(cfg)
-		err = storage.LoadFromFile(mapStorage, cfg)
+		repo := memory.NewMemoryRepository(cfg)
+		err = memory.LoadFromFile(repo, cfg)
 		if err != nil {
 			logger.Fatalf("Failed init file storage: %v", err)
 		}
-		appStorage = mapStorage
+		appRepo = repo
 	}
 
 	delCh := make(chan models.DeleteURLChannelMessage)
 	defer close(delCh)
 
-	server := server.NewApp(cfg, appStorage, logger, delCh)
-	go server.FlushDeleteMessages()
+	s := service.NewShortenerService(appRepo, cfg, delCh)
+	go s.FlushDeleteMessages()
+
+	server := server.NewApp(cfg, logger, delCh, s)
 	err = server.Start()
 	if err != nil {
 		logger.Fatalf("Failed init server: %v", err)
 	}
-}
-
-func applyMigrations(cfg *config.Config) {
-	logging.Log.Infof("DB DSN=%s", cfg.DatabaseDSN)
-	migrations, err := migrate.New("file://internal/storage/migrations", cfg.DatabaseDSN)
-	if err != nil {
-		logging.Log.Fatalf("Failed to apply migrations: %v", err)
-	}
-	migrations.Up()
-
-	if err != nil {
-		if errors.Is(err, migrate.ErrNoChange) {
-			logging.Log.Info("Migrations no change")
-			return
-		}
-		log.Fatalf("Migrations failed: %v ", err)
-		return
-	}
-	logging.Log.Info(" Migrations: success")
 }

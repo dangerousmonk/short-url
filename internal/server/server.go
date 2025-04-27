@@ -2,9 +2,7 @@ package server
 
 import (
 	"compress/gzip"
-	"context"
 	"net/http"
-	"time"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/auth"
@@ -12,25 +10,25 @@ import (
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
-	"github.com/dangerousmonk/short-url/internal/storage"
+	"github.com/dangerousmonk/short-url/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 )
 
 type ShortURLApp struct {
-	Storage storage.Storage
 	Config  *config.Config
 	Logger  *zap.SugaredLogger
 	DelCh   chan models.DeleteURLChannelMessage
+	Service *service.URLShortenerService
 }
 
-func NewApp(config *config.Config, storage storage.Storage, logger *zap.SugaredLogger, delCh chan models.DeleteURLChannelMessage) *ShortURLApp {
+func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.DeleteURLChannelMessage, s *service.URLShortenerService) *ShortURLApp {
 	return &ShortURLApp{
 		Config:  config,
-		Storage: storage,
 		Logger:  logger,
 		DelCh:   delCh,
+		Service: s,
 	}
 }
 
@@ -59,50 +57,17 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 	r.Use(compressor.Handler)
 
 	// handlers
-	pingHandler := handlers.PingHandler{Config: server.Config, Storage: server.Storage}
-	shortenHandler := handlers.URLShortenerHandler{Config: server.Config, Storage: server.Storage}
-	getFullURLHandler := handlers.GetFullURLHandler{Config: server.Config, Storage: server.Storage}
-	apiShortenerHandler := handlers.APIShortenerHandler{Config: server.Config, Storage: server.Storage}
-	apiBatchHandler := handlers.APIShortenBatchHandler{Config: server.Config, Storage: server.Storage}
-	apiGetUserURLsHandler := handlers.APIGetUserURLsHandler{Config: server.Config, Storage: server.Storage}
-	apiDeleteUserURLsHandler := handlers.APIDeleteUserURLsHandler{Config: server.Config, Storage: server.Storage, DelCh: server.DelCh}
-
-	r.Get("/ping", pingHandler.ServeHTTP)
+	httpHandler := handlers.NewHandler(*server.Service)
+	r.Get("/ping", httpHandler.Ping)
 
 	r.Group(func(r chi.Router) {
 		r.Use(auth.AuthMiddleware(jwtAuthenticator))
-		r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
-		r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
-		r.Get("/api/user/urls", apiGetUserURLsHandler.ServeHTTP)
-		r.Delete("/api/user/urls", apiDeleteUserURLsHandler.ServeHTTP)
-		r.Get("/{hash}", getFullURLHandler.ServeHTTP)
-		r.Post("/", shortenHandler.ServeHTTP)
+		r.Post("/api/shorten", httpHandler.APIShorten)
+		r.Post("/api/shorten/batch", httpHandler.APIShortenBatch)
+		r.Get("/api/user/urls", httpHandler.GetUserURLs)
+		r.Delete("/api/user/urls", httpHandler.APIDeleteBatch)
+		r.Get("/{hash}", httpHandler.GetURL)
+		r.Post("/", httpHandler.Shorten)
 	})
 	return r
-}
-
-func (server *ShortURLApp) FlushDeleteMessages() {
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
-	var messages []models.DeleteURLChannelMessage
-
-	for {
-		select {
-		case msg := <-server.DelCh:
-			messages = append(messages, msg)
-		case <-ticker.C:
-			if len(messages) == 0 {
-				continue
-			}
-			for _, msg := range messages {
-				err := server.Storage.DeleteBatch(context.TODO(), msg.URLs, msg.UserID)
-				if err != nil {
-					server.Logger.Warnf("FlushDeleteMessages error=%v", err)
-					continue
-				}
-			}
-			messages = nil
-		}
-	}
 }

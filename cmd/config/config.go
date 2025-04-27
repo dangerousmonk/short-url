@@ -13,7 +13,7 @@ const (
 	defaultBaseURL          = "http://localhost:8080"
 	defaultLogLevel         = "INFO"
 	defaultEnv              = "dev"
-	defaultFilePath         = "./internal/storage/storage.json"
+	defaultFilePath         = "./internal/repository/memory/storage.json"
 	defaultMaxURLsBatchSize = 5000
 	defaultJWTSecret        = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 )
