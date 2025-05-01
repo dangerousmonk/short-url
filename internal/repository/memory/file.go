@@ -1,8 +1,11 @@
-package storage
+package memory
 
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/models"
 )
 
 type FileWriter struct {
@@ -27,7 +30,7 @@ func NewWriter(fileName string) (*FileWriter, error) {
 	}, nil
 }
 
-func (fw *FileWriter) WriteData(data *Row) error {
+func (fw *FileWriter) WriteData(data *models.URLData) error {
 	return fw.encoder.Encode(&data)
 }
 
@@ -47,14 +50,31 @@ func NewFileReader(fileName string) (*FileReader, error) {
 	}, nil
 }
 
-func (fr *FileReader) ReadData(s *MapStorage) (*Row, error) {
-	var row Row
+func (fr *FileReader) ReadData(r *MemoryRepository) (*models.URLData, error) {
+	var row models.URLData
 	for fr.decoder.Decode(&row) == nil {
-		s.URLdata[row.ShortURL] = row.OriginalURL
+		r.MemoryStorage[row.ShortURL] = row.OriginalURL
 	}
 	return &row, nil
 }
 
 func (fr *FileReader) Close() error {
 	return fr.file.Close()
+}
+
+func LoadFromFile(r *MemoryRepository, cfg *config.Config) error {
+	reader, err := NewFileReader(cfg.StorageFilePath)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	_, err = reader.ReadData(r)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -2,16 +2,8 @@ package models
 
 import "time"
 
-type Request struct {
-	URL string `json:"url"`
-}
-
-type Response struct {
-	Result string `json:"result"`
-}
-
-type URLInfo struct {
-	UUID        int       `json:"uuid"`
+type URLData struct {
+	UUID        string    `json:"uuid"`
 	OriginalURL string    `json:"original_url"`
 	ShortURL    string    `json:"short_url"`
 	Active      bool      `json:"active"`
@@ -28,4 +20,16 @@ type APIBatchModel struct {
 	OriginalURL   string `json:"original_url"`
 	ShortURL      string `json:"-"`
 	Hash          string `json:"-"`
+	UserID        string `json:"-"`
+}
+
+type APIGetUserURLsResponse struct {
+	OriginalURL string `json:"original_url"`
+	ShortURL    string `json:"short_url"`
+	Hash        string `json:"-"`
+}
+
+type DeleteURLChannelMessage struct {
+	URLs   []string
+	UserID string
 }

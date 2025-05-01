@@ -1,23 +1,17 @@
 package main
 
 import (
-	"compress/gzip"
 	"context"
-	"errors"
 	"log"
-	"net/http"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
-	"github.com/dangerousmonk/short-url/internal/compress"
-	"github.com/dangerousmonk/short-url/internal/handlers"
+	"github.com/dangerousmonk/short-url/internal/database"
 	"github.com/dangerousmonk/short-url/internal/logging"
-	"github.com/dangerousmonk/short-url/internal/storage"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/repository"
+	"github.com/dangerousmonk/short-url/internal/repository/memory"
+	"github.com/dangerousmonk/short-url/internal/server"
+	"github.com/dangerousmonk/short-url/internal/service"
 )
 
 func main() {
@@ -33,68 +27,33 @@ func main() {
 	}()
 
 	ctx := context.Background()
-	var appStorage storage.Storage
+	var appRepo repository.Repository
 	if cfg.DatabaseDSN != "" {
-		applyMigrations(cfg)
-		db, err := storage.InitDB(ctx, cfg.DatabaseDSN)
+		database.ApplyMigrations(cfg)
+		db, err := database.InitDB(ctx, cfg.DatabaseDSN)
 		if err != nil {
 			logger.Fatalf("Failed init postgresql: %v", err)
 		}
 		defer db.Close()
-		appStorage = &storage.PostgreSQLStorage{DB: db}
+		appRepo = repository.NewPostgresRepo(db)
 	} else {
-		mapStorage := storage.InitMapStorage(cfg)
-		err = storage.LoadFromFile(mapStorage, cfg)
+		repo := memory.NewMemoryRepository(cfg)
+		err = memory.LoadFromFile(repo, cfg)
 		if err != nil {
 			logger.Fatalf("Failed init file storage: %v", err)
 		}
-		appStorage = mapStorage
+		appRepo = repo
 	}
 
-	r := chi.NewRouter()
-	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
+	delCh := make(chan models.DeleteURLChannelMessage)
+	defer close(delCh)
 
-	// middleware
-	r.Use(logging.RequestLogger)
-	r.Use(compress.DecompressMiddleware)
-	r.Use(compressor.Handler)
+	s := service.NewShortenerService(appRepo, cfg, delCh)
+	go s.FlushDeleteMessages()
 
-	// handlers
-	pingHandler := handlers.PingHandler{Config: cfg, Storage: appStorage}
-	shortenHandler := handlers.URLShortenerHandler{Config: cfg, Storage: appStorage}
-	getFullURLHandler := handlers.GetFullURLHandler{Config: cfg, Storage: appStorage}
-	apiShortenerHandler := handlers.APIShortenerHandler{Config: cfg, Storage: appStorage}
-	apiBatchHandler := handlers.APIShortenBatchHandler{Config: cfg, Storage: appStorage}
-
-	r.Get("/ping", pingHandler.ServeHTTP)
-	r.Post("/", shortenHandler.ServeHTTP)
-	r.Get("/{hash}", getFullURLHandler.ServeHTTP)
-	r.Post("/api/shorten", apiShortenerHandler.ServeHTTP)
-	r.Post("/api/shorten/batch", apiBatchHandler.ServeHTTP)
-
-	logger.Infof("Running app on %s...", cfg.ServerAddr)
-
-	err = http.ListenAndServe(cfg.ServerAddr, r)
+	server := server.NewApp(cfg, logger, delCh, s)
+	err = server.Start()
 	if err != nil {
-		logger.Fatalf("App startup failed: %v", err)
+		logger.Fatalf("Failed init server: %v", err)
 	}
-}
-
-func applyMigrations(cfg *config.Config) {
-	logging.Log.Infof("DB DSN=%s", cfg.DatabaseDSN)
-	migrations, err := migrate.New("file://internal/storage/migrations", cfg.DatabaseDSN)
-	if err != nil {
-		logging.Log.Fatalf("Failed to apply migrations: %v", err)
-	}
-	migrations.Up()
-
-	if err != nil {
-		if errors.Is(err, migrate.ErrNoChange) {
-			logging.Log.Info("Migrations no change")
-			return
-		}
-		log.Fatalf("Migrations failed: %v ", err)
-		return
-	}
-	logging.Log.Info(" Migrations: success")
 }
