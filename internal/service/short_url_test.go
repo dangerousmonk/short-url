@@ -6,10 +6,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
-	"github.com/stretchr/testify/require"
 )
 
 type RepositoryMock struct {

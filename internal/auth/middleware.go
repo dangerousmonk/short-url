@@ -4,8 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/google/uuid"
+
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 const (

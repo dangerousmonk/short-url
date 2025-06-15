@@ -3,8 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 func (h *HTTPHandler) GetURL(w http.ResponseWriter, req *http.Request) {

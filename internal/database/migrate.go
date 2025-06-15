@@ -4,12 +4,13 @@ import (
 	"errors"
 	"log"
 
-	"github.com/dangerousmonk/short-url/cmd/config"
-	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 func ApplyMigrations(cfg *config.Config) {

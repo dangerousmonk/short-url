@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dangerousmonk/short-url/cmd/config"
-	"github.com/dangerousmonk/short-url/internal/repository/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/repository/mocks"
 )
 
 func TestAddShortURLOk(t *testing.T) {

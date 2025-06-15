@@ -4,8 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 const (

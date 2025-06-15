@@ -5,9 +5,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/dangerousmonk/short-url/cmd/config"
 )
 
 type URLExistsError struct {

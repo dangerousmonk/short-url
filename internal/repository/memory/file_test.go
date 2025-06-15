@@ -5,10 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/dangerousmonk/short-url/cmd/config"
-	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dangerousmonk/short-url/cmd/config"
+	"github.com/dangerousmonk/short-url/internal/models"
 )
 
 func TestLoadFromFile(t *testing.T) {

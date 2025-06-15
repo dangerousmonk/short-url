@@ -8,9 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	config "github.com/dangerousmonk/short-url/cmd/config"
 	models "github.com/dangerousmonk/short-url/internal/models"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRepository is a mock of Repository interface.
