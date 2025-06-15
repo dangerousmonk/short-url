@@ -18,7 +18,7 @@ func ApplyMigrations(cfg *config.Config) {
 	if err != nil {
 		logging.Log.Fatalf("Failed to apply migrations: %v", err)
 	}
-	migrations.Up()
+	err = migrations.Up()
 
 	if err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {

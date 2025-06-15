@@ -21,9 +21,9 @@ func TestAddShortURLOk(t *testing.T) {
 	mockCfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	m.EXPECT().AddShortURL(context.Background(), fullURL, mockCfg, gomock.Any()).Return(hash, nil)
+	m.EXPECT().AddShortURL(context.Background(), fullURL, hash, mockCfg, gomock.Any()).Return(hash, nil)
 
-	short, err := m.AddShortURL(context.Background(), fullURL, mockCfg, "")
+	short, err := m.AddShortURL(context.Background(), fullURL, hash, mockCfg, "")
 	require.Equal(t, hash, short)
 	require.NoError(t, err)
 }
@@ -37,9 +37,9 @@ func TestAddShortURLError(t *testing.T) {
 	mockCfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	m.EXPECT().AddShortURL(context.Background(), fullURL, mockCfg, gomock.Any()).Return("", errors.New("invalid URL"))
+	m.EXPECT().AddShortURL(context.Background(), fullURL, "b4c0f991", mockCfg, gomock.Any()).Return("", errors.New("invalid URL"))
 
-	short, err := m.AddShortURL(context.Background(), fullURL, mockCfg, "")
+	short, err := m.AddShortURL(context.Background(), fullURL, "b4c0f991", mockCfg, "")
 
 	require.Empty(t, short)
 	require.Error(t, err)

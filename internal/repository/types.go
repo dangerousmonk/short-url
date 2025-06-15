@@ -13,7 +13,7 @@ type Repository interface {
 	// GetURLData retrieves the original URL data by hash
 	GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool)
 	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
-	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error)
+	AddShortURL(ctx context.Context, fullURL string, shortURL string, cfg *config.Config, userID string) (string, error)
 	// Ping checks whether internal storage is up and running
 	Ping(ctx context.Context) error
 	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage

@@ -15,12 +15,17 @@ var (
 	ErrSaveFailed = errors.New("url: failed to save URL")
 )
 
-func (s *URLShortenerService) AddURL(url string, ctx context.Context, userID string) (string, error) {
+func (s *URLShortenerService) AddURL(ctx context.Context, url string, userID string) (string, error) {
 	if !helpers.IsURLValid(url) {
 		return "", ErrURLInvalid
 	}
 
-	shortURL, err := s.Repo.AddShortURL(ctx, url, s.Cfg, userID)
+	shortURL, err := helpers.HashGenerator()
+	if err != nil {
+		return "", ErrSaveFailed
+	}
+
+	shortURL, err = s.Repo.AddShortURL(ctx, url, shortURL, s.Cfg, userID)
 	if err != nil {
 		logging.Log.Warnf("s:AddURL error on inserting URL | %v", err)
 		var existsErr *repository.URLExistsError

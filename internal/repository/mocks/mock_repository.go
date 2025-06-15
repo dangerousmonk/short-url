@@ -52,18 +52,18 @@ func (mr *MockRepositoryMockRecorder) AddBatch(ctx, urls, cfg, userID interface{
 }
 
 // AddShortURL mocks base method.
-func (m *MockRepository) AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (string, error) {
+func (m *MockRepository) AddShortURL(ctx context.Context, fullURL, shortURL string, cfg *config.Config, userID string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddShortURL", ctx, fullURL, cfg, userID)
+	ret := m.ctrl.Call(m, "AddShortURL", ctx, fullURL, shortURL, cfg, userID)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // AddShortURL indicates an expected call of AddShortURL.
-func (mr *MockRepositoryMockRecorder) AddShortURL(ctx, fullURL, cfg, userID interface{}) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) AddShortURL(ctx, fullURL, shortURL, cfg, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockRepository)(nil).AddShortURL), ctx, fullURL, cfg, userID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddShortURL", reflect.TypeOf((*MockRepository)(nil).AddShortURL), ctx, fullURL, shortURL, cfg, userID)
 }
 
 // DeleteBatch mocks base method.

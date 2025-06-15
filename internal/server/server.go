@@ -69,5 +69,7 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 		r.Get("/{hash}", httpHandler.GetURL)
 		r.Post("/", httpHandler.Shorten)
 	})
+
+	r.Mount("/debug", middleware.Profiler())
 	return r
 }

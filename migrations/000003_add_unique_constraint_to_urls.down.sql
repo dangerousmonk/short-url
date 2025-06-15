@@ -1,0 +1,1 @@
+ALTER TABLE urls DROP CONSTRAINT IF EXISTS urls_short_url_key;
