@@ -1,3 +1,5 @@
+// package server is used to describe main application entities as well as
+// describes chi router and main HTTP handlers
 package server
 
 import (
@@ -6,9 +8,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
+	_ "github.com/dangerousmonk/short-url/docs"
 	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/compress"
 	"github.com/dangerousmonk/short-url/internal/handlers"
@@ -17,6 +21,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
+// ShortURLApp is a structure to represent short-url app and its main components
 type ShortURLApp struct {
 	Config  *config.Config
 	Logger  *zap.SugaredLogger
@@ -33,6 +38,16 @@ func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.
 	}
 }
 
+// Start godoc
+//
+//	@title						short-url app
+//	@version					1.0
+//	@description				API Server
+//	@BasePath					/
+//
+//	@securityDefinitions.apikey	ApiKeyAuth
+//	@in							Cookie
+//	@name						auth
 func (server *ShortURLApp) Start() error {
 	r := server.initRouter()
 	server.Logger.Infof("Running app on %s...", server.Config.ServerAddr)
@@ -56,6 +71,11 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 	r.Use(logging.RequestLogger)
 	r.Use(compress.DecompressMiddleware)
 	r.Use(compressor.Handler)
+
+	// swagger
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8099/swagger/doc.json"),
+	))
 
 	// handlers
 	httpHandler := handlers.NewHandler(*server.Service)

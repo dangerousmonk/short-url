@@ -1,3 +1,5 @@
+// Package repository describes postgresql Repository as well as provides NewPostgresRepo
+// function to initialize PostgresRepo
 package repository
 
 import (

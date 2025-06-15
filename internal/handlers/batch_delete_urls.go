@@ -9,6 +9,17 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// APIDeleteBatch godoc
+//
+//	@Summary		Deletes batch of urls from storage by user
+//	@Description	APIDeleteBatch is used to set active flag=false for multiple url records for user
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Tags			API
+//	@Success		202
+//	@Failure		400,401
+//	@Router			/api/user/urls   [delete]
 func (h *HTTPHandler) APIDeleteBatch(w http.ResponseWriter, req *http.Request) {
 	userID := req.Header.Get(auth.UserIDHeaderName)
 	if userID == "" {

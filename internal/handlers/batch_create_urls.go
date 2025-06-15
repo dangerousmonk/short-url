@@ -11,6 +11,18 @@ import (
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
+// APIShortenBatch godoc
+//
+//	@Summary		Create batch of urls
+//	@Description	APIShortenBatch is used to handle multiple urls in request
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Tags			API
+//	@Param			data	body		models.APIBatchModel	true	"Request body"
+//	@Success		201 {object}	models.APIBatchResponse
+//	@Failure		400,401,413,500
+//	@Router			/api/shorten/batch   [post]
 func (h *HTTPHandler) APIShortenBatch(w http.ResponseWriter, req *http.Request) {
 	var urls []models.APIBatchModel
 	if err := json.NewDecoder(req.Body).Decode(&urls); err != nil {

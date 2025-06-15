@@ -1,3 +1,5 @@
+// Package memory describes in-memory Repository as well as provides NewMemoryRepository
+// function to initialize MemoryRepository
 package memory
 
 import (

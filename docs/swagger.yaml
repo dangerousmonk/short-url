@@ -1,0 +1,207 @@
+basePath: /
+definitions:
+  models.APIBatchModel:
+    properties:
+      correlation_id:
+        type: string
+      original_url:
+        type: string
+    type: object
+  models.APIBatchResponse:
+    properties:
+      correlation_id:
+        type: string
+      short_url:
+        type: string
+    type: object
+  models.APIGetUserURLsResponse:
+    properties:
+      original_url:
+        type: string
+      short_url:
+        type: string
+    type: object
+  models.Request:
+    properties:
+      url:
+        type: string
+    type: object
+  models.Response:
+    properties:
+      result:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API Server
+  title: short-url app
+  version: "1.0"
+paths:
+  /:
+    post:
+      consumes:
+      - text/plain
+      description: Used to short single URL provided in request body
+      parameters:
+      - description: Request body
+        in: body
+        name: data
+        required: true
+        schema:
+          type: string
+      produces:
+      - text/plain
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+      summary: Used to short single URL
+      tags:
+      - URL
+  /{hash}:
+    get:
+      consumes:
+      - text/plain
+      description: GetURL redirects to the original URL by using short url
+      produces:
+      - text/plain
+      responses:
+        "307":
+          description: Temporary Redirect
+        "404":
+          description: Not Found
+        "410":
+          description: Gone
+      summary: Redirects to the original URL
+      tags:
+      - URL
+  /api/shorten:
+    post:
+      consumes:
+      - application/json
+      description: APIShorten is used to handle single url in request
+      parameters:
+      - description: Request body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: Create single short url
+      tags:
+      - API
+  /api/shorten/batch:
+    post:
+      consumes:
+      - application/json
+      description: APIShortenBatch is used to handle multiple urls in request
+      parameters:
+      - description: Request body
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/models.APIBatchModel'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.APIBatchResponse'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "413":
+          description: Request Entity Too Large
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: Create batch of urls
+      tags:
+      - API
+  /api/user/urls:
+    delete:
+      consumes:
+      - application/json
+      description: APIDeleteBatch is used to set active flag=false for multiple url
+        records for user
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes batch of urls from storage by user
+      tags:
+      - API
+    get:
+      consumes:
+      - application/json
+      description: GetUserURLs retreives all active urls saved by user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.APIGetUserURLsResponse'
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: Retreives all urls saved by user
+      tags:
+      - API
+  /ping:
+    get:
+      description: Checks if DB is alive
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: DB Healthcheck
+      tags:
+      - Ping
+securityDefinitions:
+  ApiKeyAuth:
+    in: Cookie
+    name: auth
+    type: apiKey
+swagger: "2.0"

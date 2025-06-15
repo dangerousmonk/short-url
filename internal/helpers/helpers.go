@@ -8,6 +8,7 @@ import (
 // Pre-allocate a reusable buffer to avoid allocations
 var hashBuf = make([]byte, 4)
 
+// HashGenerator is helper funtion to generate random hash
 func HashGenerator() (string, error) {
 	if _, err := rand.Read(hashBuf); err != nil {
 		return "", err
@@ -15,6 +16,7 @@ func HashGenerator() (string, error) {
 	return hex.EncodeToString(hashBuf), nil
 }
 
+// IsURLValid is helper funtion that checks if provided string is vaild URL
 func IsURLValid(s string) bool {
 	if len(s) < 7 {
 		return false

@@ -13,6 +13,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// ApplyMigrations is used before application is up and running to apply required migrations to the database schema
 func ApplyMigrations(cfg *config.Config) {
 	logging.Log.Infof("DB DSN=%s", cfg.DatabaseDSN)
 	migrations, err := migrate.New("file://migrations", cfg.DatabaseDSN)

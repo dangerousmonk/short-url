@@ -36,11 +36,13 @@ func (claims *Claims) Valid() error {
 	return nil
 }
 
+// Authenticator describes interface that must be implemented for authorization middleware
 type Authenticator interface {
 	CreateToken(userID string, duration time.Duration) (string, error)
 	ValidateToken(token string) (*Claims, error)
 }
 
+// CreateToken generates new token for user, using golang-jwt package
 func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration) (string, error) {
 	claims, err := NewClaims(userID, duration)
 	if err != nil {
@@ -51,6 +53,7 @@ func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration
 	return token.SignedString([]byte(maker.secretKey))
 }
 
+// ValidateToken checks if provided token is valid
 func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 	claims := &Claims{}
 	keyFunc := func(token *jwt.Token) (interface{}, error) {

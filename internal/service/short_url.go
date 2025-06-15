@@ -1,3 +1,4 @@
+// Package service is used to describe URLShortenerService and to helper initialize service
 package service
 
 import (
@@ -31,6 +32,7 @@ type URLShortenerService struct {
 	Cfg   *config.Config
 }
 
+// NewShortenerService is a function used to initialize new URLShortenerService
 func NewShortenerService(r repository.Repository, cfg *config.Config, delCh chan models.DeleteURLChannelMessage) *URLShortenerService {
 	service := URLShortenerService{Repo: r, Cfg: cfg, DelCh: delCh}
 	return &service

@@ -18,6 +18,7 @@ const (
 	defaultJWTSecret        = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 )
 
+// Config represents a structure that contains all configurations options for the application.
 type Config struct {
 	ServerAddr       string
 	BaseURL          string
@@ -29,19 +30,20 @@ type Config struct {
 	JWTSecret        string
 }
 
+// InitConfig is used to initialize Config
 func InitConfig() *Config {
 	cfg := &Config{}
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Unable to load envs from file %v", err)
 	}
-	// Чтение флагов командной строки
+	// Read cmd
 	flag.StringVar(&cfg.ServerAddr, "a", cfg.ServerAddr, "Address to run server")
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address for shortened URL")
 	flag.StringVar(&cfg.StorageFilePath, "f", cfg.StorageFilePath, "Path to storage file")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
 	flag.Parse()
 
-	// Чтение переменных окружения
+	// Read env
 	addr := os.Getenv("SERVER_ADDRESS")
 	if addr != "" {
 		cfg.ServerAddr = addr

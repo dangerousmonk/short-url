@@ -1,3 +1,5 @@
+// Package auth contains all required tools to provide authentication mechanics to the application.
+
 package auth
 
 import (
@@ -9,11 +11,14 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// Constants that represent names of authorization entities in request
 const (
 	UserIDHeaderName = "x-user-id"
 	AuthCookieName   = "auth"
 )
 
+// AuthMiddleware is the middleware that resolves authorization cookie from request
+// and generates one if failed to find one.
 func AuthMiddleware(authenticator Authenticator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {

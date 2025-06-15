@@ -8,6 +8,16 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// GetURL godoc
+//
+//	@Summary		Redirects to the original URL
+//	@Description	GetURL redirects to the original URL by using short url
+//	@Accept			plain
+//	@Produce		plain
+//	@Tags			URL
+//	@Success		307
+//	@Failure		404,410
+//	@Router			/{hash}   [get]
 func (h *HTTPHandler) GetURL(w http.ResponseWriter, req *http.Request) {
 	hash := chi.URLParam(req, "hash")
 	urlData, isExist := h.service.GetURLData(req.Context(), hash)

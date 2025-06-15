@@ -12,6 +12,18 @@ import (
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
+// APIShorten godoc
+//
+//	@Summary		Create single short url
+//	@Description	APIShorten is used to handle single url in request
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Tags			API
+//	@Param			data	body		models.Request	true	"Request body"
+//	@Success		201 {object}	models.Response
+//	@Failure		400,401,409,500
+//	@Router			/api/shorten   [post]
 func (h *HTTPHandler) APIShorten(w http.ResponseWriter, req *http.Request) {
 	var r models.Request
 	if err := json.NewDecoder(req.Body).Decode(&r); err != nil {
@@ -69,6 +81,17 @@ func (h *HTTPHandler) APIShorten(w http.ResponseWriter, req *http.Request) {
 
 }
 
+// Shorten godoc
+//
+//	@Summary		Used to short single URL
+//	@Description	Used to short single URL provided in request body
+//	@Accept			plain
+//	@Produce		plain
+//	@Param			data	body		string	true	"Request body"
+//	@Tags			URL
+//	@Success		201
+//	@Failure		400,401,409,500
+//	@Router			/   [post]
 func (h *HTTPHandler) Shorten(w http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
