@@ -3,12 +3,13 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/repository/memory"
 	"github.com/dangerousmonk/short-url/internal/service"
-	"github.com/go-chi/chi/v5"
 )
 
 func Example() {
