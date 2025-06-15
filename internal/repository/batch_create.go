@@ -8,6 +8,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
 func (r *PostgresRepo) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error) {
 	tx, err := r.conn.Begin()
 	if err != nil {

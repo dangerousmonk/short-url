@@ -8,6 +8,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Log is object of zap.SugaredLogger
 var Log *zap.SugaredLogger
 
 // InitLogger is a helper function to initalize logger.

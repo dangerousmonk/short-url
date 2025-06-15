@@ -9,12 +9,14 @@ import (
 	"github.com/dangerousmonk/short-url/internal/repository"
 )
 
+// Errors that might occur during AddURL operation.
 var (
 	ErrURLInvalid = errors.New("url: provided url is invalid")
 	ErrURLExists  = errors.New("url: url already exists")
 	ErrSaveFailed = errors.New("url: failed to save URL")
 )
 
+// AddURL is used to create single short URL.
 func (s *URLShortenerService) AddURL(ctx context.Context, url string, userID string) (string, error) {
 	if !helpers.IsURLValid(url) {
 		return "", ErrURLInvalid

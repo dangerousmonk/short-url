@@ -14,7 +14,7 @@ import (
 type Repository interface {
 	// GetURLData retrieves the original URL data by hash
 	GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool)
-	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
+	// AddShortURL saves short URL along with original URL to internal storage
 	AddShortURL(ctx context.Context, fullURL string, shortURL string, cfg *config.Config, userID string) (string, error)
 	// Ping checks whether internal storage is up and running
 	Ping(ctx context.Context) error
@@ -26,10 +26,12 @@ type Repository interface {
 	DeleteBatch(ctx context.Context, urls []string, userID string) error
 }
 
+// PostgresRepo is a struct for postgresql Repository.
 type PostgresRepo struct {
 	conn *sql.DB
 }
 
+// NewPostgresRepo is a helper function that returns pointer to new postgresl repository.
 func NewPostgresRepo(conn *sql.DB) *PostgresRepo {
 	return &PostgresRepo{conn}
 }

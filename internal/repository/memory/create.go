@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// AddShortURL saves short URL along with original URL to memory storage and saves it to the file storage.
 func (r *MemoryRepository) AddShortURL(ctx context.Context, fullURL string, shortURL string, cfg *config.Config, userID string) (string, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()

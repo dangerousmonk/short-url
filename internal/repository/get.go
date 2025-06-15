@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// GetURLData retrieves the original URL data by hash
 func (r *PostgresRepo) GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()

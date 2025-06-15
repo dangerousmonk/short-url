@@ -8,6 +8,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// FlushDeleteMessages receives delete messages from channel and calls repository to handle their deletion from storage.
 func (s *URLShortenerService) FlushDeleteMessages() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()

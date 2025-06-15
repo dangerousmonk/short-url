@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// Errors that might occur during BatchCreate operation.
 var (
 	ErrTooManyURLs     = errors.New("urls: too many urls provided")
 	ErrNoValidURLs     = errors.New("urls: at least one valid URL required")
@@ -16,6 +17,7 @@ var (
 	ErrSaveBatchFailed = errors.New("repo: failed to save data")
 )
 
+// BatchCreate is used to create multiple short URLs.
 func (s *URLShortenerService) BatchCreate(urls []models.APIBatchModel, ctx context.Context, userID string) ([]models.APIBatchResponse, error) {
 	var validURLs []models.APIBatchModel
 

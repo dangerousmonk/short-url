@@ -20,15 +20,13 @@ var (
 	errInvalidClaims = errors.New("claims: failed to initialize")
 )
 
+// Claims extends jwt.RegisteredClaims with userID
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string `json:"user_id"`
 }
 
-type JWTAuthenticator struct {
-	secretKey string
-}
-
+// Valid checks if token is expired
 func (claims *Claims) Valid() error {
 	if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
 		return errExpiredToken
@@ -36,10 +34,9 @@ func (claims *Claims) Valid() error {
 	return nil
 }
 
-// Authenticator describes interface that must be implemented for authorization middleware
-type Authenticator interface {
-	CreateToken(userID string, duration time.Duration) (string, error)
-	ValidateToken(token string) (*Claims, error)
+// JWTAuthenticator represents struct that implements
+type JWTAuthenticator struct {
+	secretKey string
 }
 
 // CreateToken generates new token for user, using golang-jwt package
@@ -72,6 +69,13 @@ func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 
 }
 
+// Authenticator describes interface that must be implemented for authorization middleware
+type Authenticator interface {
+	CreateToken(userID string, duration time.Duration) (string, error)
+	ValidateToken(token string) (*Claims, error)
+}
+
+// NewJWTAuthenticator is a function that initialize Authenticator
 func NewJWTAuthenticator(secretKey string) (Authenticator, error) {
 	if len(secretKey) < secretKeySize {
 		return nil, errors.New("invalid secretKey len")
@@ -79,6 +83,7 @@ func NewJWTAuthenticator(secretKey string) (Authenticator, error) {
 	return &JWTAuthenticator{secretKey}, nil
 }
 
+// NewJWTAuthenticator is a function that initialize jwt.Claims
 func NewClaims(userID string, duration time.Duration) (*Claims, error) {
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{

@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// CompressedContentTypes describes allowed content types for compress middleware
 var CompressedContentTypes = []string{
 	"text/html",
 	"application/json",

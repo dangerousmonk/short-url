@@ -29,6 +29,7 @@ type ShortURLApp struct {
 	Service *service.URLShortenerService
 }
 
+// NewApp is a helper function that returns a pointer to the new app struct.
 func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.DeleteURLChannelMessage, s *service.URLShortenerService) *ShortURLApp {
 	return &ShortURLApp{
 		Config:  config,
