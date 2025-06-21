@@ -19,7 +19,7 @@ type RepositoryMock struct {
 	userStorage     map[string][]string
 }
 
-func newRepositoryMock() RepositoryMock {
+func NewRepositoryMock() RepositoryMock {
 	return RepositoryMock{
 		storage:         map[string]string{},
 		activityStorage: map[string]bool{},
@@ -84,7 +84,7 @@ func BenchmarkShortURLService(b *testing.B) {
 	require.NoError(b, err)
 
 	cfg := config.Config{BaseURL: "http://localhost:8080", MaxURLsBatchSize: 50}
-	service := NewShortenerService(newRepositoryMock(), &cfg, make(chan models.DeleteURLChannelMessage))
+	service := NewShortenerService(NewRepositoryMock(), &cfg, make(chan models.DeleteURLChannelMessage))
 
 	ctx := context.Background()
 	caseNum := 10

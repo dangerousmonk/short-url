@@ -39,7 +39,7 @@ func (h *HTTPHandler) APIShortenBatch(w http.ResponseWriter, req *http.Request) 
 
 	defer req.Body.Close()
 
-	resp, err := h.service.BatchCreate(urls, req.Context(), userID)
+	resp, err := h.service.BatchCreate(req.Context(), urls, userID)
 
 	if err != nil {
 		switch {

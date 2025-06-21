@@ -18,7 +18,7 @@ var (
 )
 
 // BatchCreate is used to create multiple short URLs.
-func (s *URLShortenerService) BatchCreate(urls []models.APIBatchModel, ctx context.Context, userID string) ([]models.APIBatchResponse, error) {
+func (s *URLShortenerService) BatchCreate(ctx context.Context, urls []models.APIBatchModel, userID string) ([]models.APIBatchResponse, error) {
 	var validURLs []models.APIBatchModel
 
 	if len(urls) > s.Cfg.MaxURLsBatchSize {
