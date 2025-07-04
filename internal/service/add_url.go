@@ -9,18 +9,25 @@ import (
 	"github.com/dangerousmonk/short-url/internal/repository"
 )
 
+// Errors that might occur during AddURL operation.
 var (
 	ErrURLInvalid = errors.New("url: provided url is invalid")
 	ErrURLExists  = errors.New("url: url already exists")
 	ErrSaveFailed = errors.New("url: failed to save URL")
 )
 
-func (s *URLShortenerService) AddURL(url string, ctx context.Context, userID string) (string, error) {
+// AddURL is used to create single short URL.
+func (s *URLShortenerService) AddURL(ctx context.Context, url string, userID string) (string, error) {
 	if !helpers.IsURLValid(url) {
 		return "", ErrURLInvalid
 	}
 
-	shortURL, err := s.Repo.AddShortURL(ctx, url, s.Cfg, userID)
+	shortURL, err := helpers.HashGenerator()
+	if err != nil {
+		return "", ErrSaveFailed
+	}
+
+	shortURL, err = s.Repo.AddShortURL(ctx, url, shortURL, s.Cfg, userID)
 	if err != nil {
 		logging.Log.Warnf("s:AddURL error on inserting URL | %v", err)
 		var existsErr *repository.URLExistsError

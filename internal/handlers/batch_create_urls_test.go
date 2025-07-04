@@ -11,14 +11,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/dangerousmonk/short-url/cmd/config"
 	"github.com/dangerousmonk/short-url/internal/auth"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/repository/mocks"
 	"github.com/dangerousmonk/short-url/internal/service"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func requireBodyMatch(t *testing.T, body *bytes.Buffer, resp []models.APIBatchResponse) {

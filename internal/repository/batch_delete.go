@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// DeleteBatch marks multiple records as not active
 func (r *PostgresRepo) DeleteBatch(ctx context.Context, urls []string, userID string) error {
 	var args []any
 

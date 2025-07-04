@@ -1,3 +1,4 @@
+// Package service is used to describe URLShortenerService and to helper initialize service
 package service
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/repository"
 )
 
+// URLShortener is an interface for the business logic layer.
 type URLShortener interface {
 	// GetURLData retrieves the original URL data by hash
 	GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool)
@@ -25,12 +27,14 @@ type URLShortener interface {
 	FlushDeleteMessages()
 }
 
+// URLShortenerService is a struct that describes service.
 type URLShortenerService struct {
 	Repo  repository.Repository
 	DelCh chan models.DeleteURLChannelMessage
 	Cfg   *config.Config
 }
 
+// NewShortenerService is a function used to initialize new URLShortenerService
 func NewShortenerService(r repository.Repository, cfg *config.Config, delCh chan models.DeleteURLChannelMessage) *URLShortenerService {
 	service := URLShortenerService{Repo: r, Cfg: cfg, DelCh: delCh}
 	return &service

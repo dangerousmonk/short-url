@@ -6,6 +6,13 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// PingHandler godoc
+// @Summary      DB Healthcheck
+// @Description  Checks if DB is alive
+// @Tags         Ping
+// @Success      200
+// @Failure      500
+// @Router       /ping [get]
 func (h *HTTPHandler) Ping(w http.ResponseWriter, req *http.Request) {
 	err := h.service.Ping(req.Context())
 	if err != nil {

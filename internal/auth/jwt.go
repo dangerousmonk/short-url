@@ -4,8 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
 const (
@@ -19,15 +20,13 @@ var (
 	errInvalidClaims = errors.New("claims: failed to initialize")
 )
 
+// Claims extends jwt.RegisteredClaims with userID
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string `json:"user_id"`
 }
 
-type JWTAuthenticator struct {
-	secretKey string
-}
-
+// Valid checks if token is expired
 func (claims *Claims) Valid() error {
 	if claims.ExpiresAt != nil && time.Now().After(claims.ExpiresAt.Time) {
 		return errExpiredToken
@@ -35,11 +34,12 @@ func (claims *Claims) Valid() error {
 	return nil
 }
 
-type Authenticator interface {
-	CreateToken(userID string, duration time.Duration) (string, error)
-	ValidateToken(token string) (*Claims, error)
+// JWTAuthenticator represents struct that implements
+type JWTAuthenticator struct {
+	secretKey string
 }
 
+// CreateToken generates new token for user, using golang-jwt package
 func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration) (string, error) {
 	claims, err := NewClaims(userID, duration)
 	if err != nil {
@@ -50,6 +50,7 @@ func (maker *JWTAuthenticator) CreateToken(userID string, duration time.Duration
 	return token.SignedString([]byte(maker.secretKey))
 }
 
+// ValidateToken checks if provided token is valid
 func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 	claims := &Claims{}
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
@@ -68,6 +69,13 @@ func (maker *JWTAuthenticator) ValidateToken(token string) (*Claims, error) {
 
 }
 
+// Authenticator describes interface that must be implemented for authorization middleware
+type Authenticator interface {
+	CreateToken(userID string, duration time.Duration) (string, error)
+	ValidateToken(token string) (*Claims, error)
+}
+
+// NewJWTAuthenticator is a function that initialize Authenticator
 func NewJWTAuthenticator(secretKey string) (Authenticator, error) {
 	if len(secretKey) < secretKeySize {
 		return nil, errors.New("invalid secretKey len")
@@ -75,6 +83,7 @@ func NewJWTAuthenticator(secretKey string) (Authenticator, error) {
 	return &JWTAuthenticator{secretKey}, nil
 }
 
+// NewJWTAuthenticator is a function that initialize jwt.Claims
 func NewClaims(userID string, duration time.Duration) (*Claims, error) {
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{

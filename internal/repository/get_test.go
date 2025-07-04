@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/dangerousmonk/short-url/internal/models"
-	"github.com/dangerousmonk/short-url/internal/repository/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/repository/mocks"
 )
 
 func TestGetFullURLOk(t *testing.T) {

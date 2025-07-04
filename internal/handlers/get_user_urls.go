@@ -8,6 +8,18 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// GetUserURLs godoc
+//
+//	@Summary		Retreives all urls saved by user
+//	@Description	GetUserURLs retreives all active urls saved by user
+//	@Security		ApiKeyAuth
+//	@Accept			json
+//	@Produce		json
+//	@Tags			API
+//	@Success		200 {object}	models.APIGetUserURLsResponse
+//	@Success		204
+//	@Failure		401,500
+//	@Router			/api/user/urls   [get]
 func (h *HTTPHandler) GetUserURLs(w http.ResponseWriter, req *http.Request) {
 	userID := req.Header.Get(auth.UserIDHeaderName)
 	w.Header().Set("Content-Type", "application/json")

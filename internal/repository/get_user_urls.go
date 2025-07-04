@@ -8,6 +8,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// GetUsersURLs retrieves all saved URLs by specific user
 func (r *PostgresRepo) GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*2)
 	defer cancel()

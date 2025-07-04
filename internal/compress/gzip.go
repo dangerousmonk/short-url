@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// CompressedContentTypes describes allowed content types for compress middleware
 var CompressedContentTypes = []string{
 	"text/html",
 	"application/json",
@@ -22,6 +23,7 @@ func decompress(body io.ReadCloser) (io.ReadCloser, error) {
 	return reader, nil
 }
 
+// Decompress Middleware is the middleware function that adds gzip-compression functionality
 func DecompressMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		encodings := r.Header.Get("Content-Encoding")
@@ -44,7 +46,7 @@ func DecompressMiddleware(next http.Handler) http.Handler {
 		}
 		defer reader.Close()
 
-		// Закрываем старый r.Body перед заменой
+		// Close old request.Body before substitution
 		if r.Body != nil {
 			if err := r.Body.Close(); err != nil {
 				logging.Log.Warnf("Failed to close original body | err=%v", err)

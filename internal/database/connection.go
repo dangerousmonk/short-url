@@ -7,6 +7,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
+// InitDB function is used to initialize database instance for application
 func InitDB(ctx context.Context, dsn string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {

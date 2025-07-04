@@ -8,8 +8,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// Log is object of zap.SugaredLogger
 var Log *zap.SugaredLogger
 
+// InitLogger is a helper function to initalize logger.
 func InitLogger(level string, env string) (*zap.SugaredLogger, error) {
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -33,6 +35,8 @@ func InitLogger(level string, env string) (*zap.SugaredLogger, error) {
 	return Log, nil
 }
 
+// RequestLogger is helper middleware function to log every request main parameters: method,URI,response status code,
+// response size and how long it took to handle request.
 func RequestLogger(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

@@ -9,6 +9,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/models"
 )
 
+// AddBatch generates hash for multiple URLS and saves it along with original URL to in-memory storage and to file storage
 func (r *MemoryRepository) AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
