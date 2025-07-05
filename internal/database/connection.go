@@ -1,3 +1,5 @@
+// Package database provide tools to interact with database and provide tools to initialize database
+
 package database
 
 import (

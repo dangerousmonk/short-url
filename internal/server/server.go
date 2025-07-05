@@ -1,9 +1,10 @@
-// package server is used to describe main application entities as well as
+// Package server is used to describe main application entities as well as
 // describes chi router and main HTTP handlers
 package server
 
 import (
 	"compress/gzip"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -74,8 +75,9 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 	r.Use(compressor.Handler)
 
 	// swagger
+	swaggerJSONURL := fmt.Sprintf("http://%s/swagger/doc.json", server.Config.ServerAddr)
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8099/swagger/doc.json"),
+		httpSwagger.URL(swaggerJSONURL),
 	))
 
 	// handlers

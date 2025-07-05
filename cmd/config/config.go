@@ -1,3 +1,4 @@
+// Package config describes all the necessary constants and structures to run the application
 package config
 
 import (
@@ -26,8 +27,8 @@ type Config struct {
 	Env              string
 	StorageFilePath  string
 	DatabaseDSN      string
-	MaxURLsBatchSize int
 	JWTSecret        string
+	MaxURLsBatchSize int
 }
 
 // InitConfig is used to initialize Config

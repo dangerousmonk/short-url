@@ -83,7 +83,7 @@ func NewJWTAuthenticator(secretKey string) (Authenticator, error) {
 	return &JWTAuthenticator{secretKey}, nil
 }
 
-// NewJWTAuthenticator is a function that initialize jwt.Claims
+// NewClaims is a function that initialize jwt.Claims
 func NewClaims(userID string, duration time.Duration) (*Claims, error) {
 	claims := &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
