@@ -13,8 +13,8 @@ import (
 
 func TestURLShortenerService_Ping(t *testing.T) {
 	cases := []struct {
-		name       string
 		buildStubs func(s *mocks.MockRepository)
+		name       string
 		wantError  bool
 	}{
 		{

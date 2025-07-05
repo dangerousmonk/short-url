@@ -10,9 +10,9 @@ import (
 
 // MemoryRepository represents in-memory storage.
 type MemoryRepository struct {
+	cfg           *config.Config
 	MemoryStorage map[string]string
 	mutex         sync.RWMutex
-	cfg           *config.Config
 }
 
 // NewMemoryRepository is a helper function to initalize new in-memory repository.

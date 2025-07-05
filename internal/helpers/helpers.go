@@ -1,3 +1,4 @@
+// Package helpers provide multiple small but handy functions required in the main application logic
 package helpers
 
 import (

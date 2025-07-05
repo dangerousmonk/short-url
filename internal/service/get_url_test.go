@@ -20,11 +20,11 @@ func TestURLShortenerService_GetURLData(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := []struct {
+		buildStubs func(s *mocks.MockRepository)
 		name       string
 		hash       string
-		isExists   bool
-		buildStubs func(s *mocks.MockRepository)
 		expected   models.URLData
+		isExists   bool
 	}{
 		{
 			name:     "ok",
