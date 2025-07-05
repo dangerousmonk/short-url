@@ -1,3 +1,4 @@
+// Package compress contains tools and middlewares to work with compressed content
 package compress
 
 import (
@@ -23,7 +24,7 @@ func decompress(body io.ReadCloser) (io.ReadCloser, error) {
 	return reader, nil
 }
 
-// Decompress Middleware is the middleware function that adds gzip-compression functionality
+// DecompressMiddleware  is the middleware function that adds gzip-compression functionality
 func DecompressMiddleware(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		encodings := r.Header.Get("Content-Encoding")

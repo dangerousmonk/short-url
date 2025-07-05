@@ -1,4 +1,4 @@
-// package server is used to describe main application entities as well as
+// Package server is used to describe main application entities as well as
 // describes chi router and main HTTP handlers
 package server
 

@@ -1,5 +1,4 @@
 // Package auth contains all required tools to provide authentication mechanics to the application.
-
 package auth
 
 import (

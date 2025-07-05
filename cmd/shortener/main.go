@@ -21,7 +21,7 @@ func main() {
 		log.Fatalf("Failed init log: %v", err)
 	}
 	defer func() {
-		if err := logger.Sync(); err != nil {
+		if err = logger.Sync(); err != nil {
 			logger.Warnf("Failed to sync logger: %v", err)
 		}
 	}()

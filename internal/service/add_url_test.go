@@ -22,12 +22,12 @@ func TestURLShortenerService_AddURL(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := []struct {
+		expectedError error
+		buildStubs    func(s *mocks.MockRepository)
 		name          string
 		url           string
 		shortURL      string
-		buildStubs    func(s *mocks.MockRepository)
 		wantError     bool
-		expectedError error
 	}{
 		{
 			name:     "url invalid",

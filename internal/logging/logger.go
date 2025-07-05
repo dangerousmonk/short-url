@@ -1,3 +1,4 @@
+// Package logging containts all the tools required to setup logging in the application
 package logging
 
 import (

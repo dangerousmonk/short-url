@@ -17,11 +17,11 @@ func TestURLShortenerService_GetUsersURLs(t *testing.T) {
 	baseURL := "https://short"
 
 	cases := []struct {
+		buildStubs func(s *mocks.MockRepository)
 		name       string
 		userID     string
-		buildStubs func(s *mocks.MockRepository)
-		wantError  bool
 		expected   []models.APIGetUserURLsResponse
+		wantError  bool
 	}{
 		{
 			name:      "ok",
