@@ -10,25 +10,30 @@ import (
 )
 
 const (
-	defaultServerAddr       = "localhost:8080"
-	defaultBaseURL          = "http://localhost:8080"
-	defaultLogLevel         = "INFO"
-	defaultEnv              = "dev"
-	defaultFilePath         = "./internal/repository/memory/storage.json"
-	defaultMaxURLsBatchSize = 5000
-	defaultJWTSecret        = "b6e2490a47c14cb7a1732aed3ba3f3c5"
+	defaultServerAddr         = "localhost:8080"
+	defaultBaseURL            = "http://localhost:8080"
+	defaultLogLevel           = "INFO"
+	defaultEnv                = "dev"
+	defaultFilePath           = "./internal/repository/memory/storage.json"
+	defaultMaxURLsBatchSize   = 5000
+	defaultJWTSecret          = "b6e2490a47c14cb7a1732aed3ba3f3c5"
+	defaultCertPath           = "./cert.pem"
+	defaultCertPrivateKeyPath = "./key.pem"
 )
 
 // Config represents a structure that contains all configurations options for the application.
 type Config struct {
-	ServerAddr       string
-	BaseURL          string
-	LogLevel         string
-	Env              string
-	StorageFilePath  string
-	DatabaseDSN      string
-	JWTSecret        string
-	MaxURLsBatchSize int
+	ServerAddr         string
+	BaseURL            string
+	LogLevel           string
+	Env                string
+	StorageFilePath    string
+	DatabaseDSN        string
+	JWTSecret          string
+	CertPath           string
+	CertPrivateKeyPath string
+	MaxURLsBatchSize   int
+	EnableHTTPS        bool
 }
 
 // InitConfig is used to initialize Config
@@ -42,6 +47,7 @@ func InitConfig() *Config {
 	flag.StringVar(&cfg.BaseURL, "b", cfg.BaseURL, "Base address for shortened URL")
 	flag.StringVar(&cfg.StorageFilePath, "f", cfg.StorageFilePath, "Path to storage file")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
+	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS")
 	flag.Parse()
 
 	// Read env
@@ -87,6 +93,15 @@ func InitConfig() *Config {
 	if cfg.StorageFilePath == "" {
 		cfg.StorageFilePath = defaultFilePath
 	}
+
+	if cfg.CertPath == "" {
+		cfg.CertPath = defaultCertPath
+	}
+
+	if cfg.CertPrivateKeyPath == "" {
+		cfg.CertPrivateKeyPath = defaultCertPrivateKeyPath
+	}
+
 	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
 	cfg.JWTSecret = defaultJWTSecret
 	return cfg
