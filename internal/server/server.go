@@ -54,6 +54,11 @@ func (server *ShortURLApp) Start() error {
 	r := server.initRouter()
 	server.Logger.Infof("Running app on %s...", server.Config.ServerAddr)
 
+	if server.Config.EnableHTTPS {
+		return http.ListenAndServeTLS(
+			server.Config.ServerAddr, server.Config.CertPath, server.Config.CertPrivateKeyPath, r)
+	}
+
 	err := http.ListenAndServe(server.Config.ServerAddr, r)
 	if err != nil {
 		return err
