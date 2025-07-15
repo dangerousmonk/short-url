@@ -22,12 +22,12 @@ func TestURLShortenerService_BatchCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	cases := []struct {
+		buildStubs    func(s *mocks.MockRepository)
 		name          string
+		expectedError error
 		input         []models.APIBatchModel
 		expected      []models.APIBatchResponse
-		buildStubs    func(s *mocks.MockRepository)
 		wantError     bool
-		expectedError error
 	}{
 		{
 			name: "too many urls",

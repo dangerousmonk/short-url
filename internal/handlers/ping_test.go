@@ -23,10 +23,10 @@ func TestPing(t *testing.T) {
 	cfg := config.Config{BaseURL: "http://localhost:8080"}
 
 	testCases := []struct {
-		name          string
-		method        string
 		buildStubs    func(r *mocks.MockRepository)
 		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
+		name          string
+		method        string
 	}{
 		{
 			name:   "OK",

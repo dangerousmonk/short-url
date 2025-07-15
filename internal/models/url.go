@@ -1,14 +1,16 @@
+// Package models describes main entities of the the application
+
 package models
 
 import "time"
 
 // URLData represents common URL data from storage
 type URLData struct {
-	UUID        string    `json:"uuid"`
+	CreatedAt   time.Time `json:"created_at"`
 	OriginalURL string    `json:"original_url"`
 	ShortURL    string    `json:"short_url"`
+	UUID        string    `json:"uuid"`
 	Active      bool      `json:"active"`
-	CreatedAt   time.Time `json:"created_at"`
 }
 
 // APIBatchResponse represents required fields for APIShortenBatch HTTP handler
@@ -35,6 +37,6 @@ type APIGetUserURLsResponse struct {
 
 // DeleteURLChannelMessage represents structure of delete message channel
 type DeleteURLChannelMessage struct {
-	URLs   []string
 	UserID string
+	URLs   []string
 }

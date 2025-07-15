@@ -50,13 +50,13 @@ func TestAPIShortenBatch(t *testing.T) {
 	}
 
 	testCases := []struct {
+		buildStubs    func(s *mocks.MockRepository)
+		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 		name          string
 		method        string
 		body          string
-		expectedCode  int
-		buildStubs    func(s *mocks.MockRepository)
-		checkResponse func(t *testing.T, recoder *httptest.ResponseRecorder)
 		userHeader    string
+		expectedCode  int
 	}{
 		{
 			name:         "Request without headers",

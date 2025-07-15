@@ -1,3 +1,5 @@
+// Package handlers that serve as main entrypoint to perform HTTP POST operations on single URL.
+// Their main difference is the format of request body: APIShorten supports json body while Shorten supports plain text
 package handlers
 
 import (
@@ -51,7 +53,7 @@ func (h *HTTPHandler) APIShorten(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusConflict)
 			resp := models.Response{Result: shortURL}
-			if err := json.NewEncoder(w).Encode(resp); err != nil {
+			if err = json.NewEncoder(w).Encode(resp); err != nil {
 				logging.Log.Warnf("APIShorten error on encoding response | %v", err)
 				http.Error(w, "Error on encoding response", http.StatusInternalServerError)
 				return

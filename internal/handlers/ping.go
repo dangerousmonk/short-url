@@ -6,7 +6,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 )
 
-// PingHandler godoc
+// Ping godoc
 // @Summary      DB Healthcheck
 // @Description  Checks if DB is alive
 // @Tags         Ping
