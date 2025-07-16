@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -23,17 +24,18 @@ const (
 
 // Config represents a structure that contains all configurations options for the application.
 type Config struct {
-	ServerAddr         string
-	BaseURL            string
+	ServerAddr         string `json:"server_address"`
+	BaseURL            string `json:"base_url"`
 	LogLevel           string
 	Env                string
-	StorageFilePath    string
-	DatabaseDSN        string
+	StorageFilePath    string `json:"file_storage_path"`
+	DatabaseDSN        string `json:"database_dsn"`
 	JWTSecret          string
 	CertPath           string
 	CertPrivateKeyPath string
+	JSONConfigFilePath string
 	MaxURLsBatchSize   int
-	EnableHTTPS        bool
+	EnableHTTPS        bool `json:"enable_https"`
 }
 
 // InitConfig is used to initialize Config
@@ -48,6 +50,8 @@ func InitConfig() *Config {
 	flag.StringVar(&cfg.StorageFilePath, "f", cfg.StorageFilePath, "Path to storage file")
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS")
+	flag.StringVar(&cfg.JSONConfigFilePath, "c", cfg.JSONConfigFilePath, "Path for json config")
+
 	flag.Parse()
 
 	// Read env
@@ -76,12 +80,40 @@ func InitConfig() *Config {
 		cfg.DatabaseDSN = dbDSN
 	}
 
-	// Инициализация переменных по умолчанию
-	if cfg.ServerAddr == "" {
-		cfg.ServerAddr = defaultServerAddr
+	enableHTTPS := os.Getenv("ENABLE_HTTPS")
+	if enableHTTPS != "" {
+		parsed, err := strconv.ParseBool(enableHTTPS)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		cfg.EnableHTTPS = parsed
 	}
-	if cfg.BaseURL == "" {
+
+	JSONConfig := os.Getenv("CONFIG")
+	if JSONConfig != "" {
+		cfg.JSONConfigFilePath = JSONConfig
+	}
+
+	// Read json config
+	var jsonCfg Config
+	if cfg.JSONConfigFilePath != "" {
+		err := ParseJSONConfig(&jsonCfg, cfg.JSONConfigFilePath)
+		if err != nil {
+			log.Printf("Unable to load envs from json config %v", err)
+		}
+	}
+
+	// Default envs
+	if cfg.ServerAddr == "" && jsonCfg.ServerAddr == "" {
+		cfg.ServerAddr = defaultServerAddr
+	} else if cfg.ServerAddr == "" && jsonCfg.ServerAddr != "" {
+		cfg.ServerAddr = jsonCfg.ServerAddr
+	}
+
+	if cfg.BaseURL == "" && jsonCfg.BaseURL == "" {
 		cfg.BaseURL = defaultBaseURL
+	} else if cfg.BaseURL == "" && jsonCfg.BaseURL != "" {
+		cfg.BaseURL = jsonCfg.BaseURL
 	}
 
 	if cfg.LogLevel == "" {
@@ -90,8 +122,10 @@ func InitConfig() *Config {
 	if cfg.Env == "" {
 		cfg.Env = defaultEnv
 	}
-	if cfg.StorageFilePath == "" {
+	if cfg.StorageFilePath == "" && jsonCfg.StorageFilePath == "" {
 		cfg.StorageFilePath = defaultFilePath
+	} else if cfg.StorageFilePath == "" && jsonCfg.StorageFilePath != "" {
+		cfg.StorageFilePath = jsonCfg.StorageFilePath
 	}
 
 	if cfg.CertPath == "" {
@@ -100,6 +134,14 @@ func InitConfig() *Config {
 
 	if cfg.CertPrivateKeyPath == "" {
 		cfg.CertPrivateKeyPath = defaultCertPrivateKeyPath
+	}
+
+	if !cfg.EnableHTTPS {
+		cfg.EnableHTTPS = jsonCfg.EnableHTTPS
+	}
+
+	if cfg.DatabaseDSN == "" && jsonCfg.DatabaseDSN != "" {
+		cfg.DatabaseDSN = jsonCfg.DatabaseDSN
 	}
 
 	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
