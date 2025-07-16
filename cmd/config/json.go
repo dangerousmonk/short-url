@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// ParseJSONConfig function is used to assign configuration values from config.json file
 func ParseJSONConfig(jsonConfig *Config, fileName string) error {
 	file, err := os.ReadFile(fileName)
 	if err != nil {
