@@ -4,8 +4,13 @@ package server
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"net/http"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -50,18 +55,34 @@ func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.
 //	@securityDefinitions.apikey	ApiKeyAuth
 //	@in							Cookie
 //	@name						auth
-func (server *ShortURLApp) Start() error {
-	r := server.initRouter()
-	server.Logger.Infof("Running app on %s...", server.Config.ServerAddr)
+func (app *ShortURLApp) Start() error {
+	var wg sync.WaitGroup
+	r := app.initRouter()
 
-	if server.Config.EnableHTTPS {
-		return http.ListenAndServeTLS(
-			server.Config.ServerAddr, server.Config.CertPath, server.Config.CertPrivateKeyPath, r)
+	rootCtx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
+
+	server := &http.Server{
+		Addr:    app.Config.ServerAddr,
+		Handler: r,
 	}
 
-	err := http.ListenAndServe(server.Config.ServerAddr, r)
-	if err != nil {
-		return err
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := listenAndServe(app, server); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
+
+	<-rootCtx.Done()
+	app.Logger.Info("Received shutdown signal, shutting down.")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Duration(app.Service.Cfg.ShutDownTimeout)*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return fmt.Errorf("server shutdown failed: %w", err)
 	}
 	return nil
 }
@@ -101,4 +122,15 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 
 	r.Mount("/debug", middleware.Profiler())
 	return r
+}
+
+// listenAndServe handles which method for serving http should be called based on config
+func listenAndServe(app *ShortURLApp, s *http.Server) error {
+	if app.Config.EnableHTTPS {
+		app.Logger.Infof("Running HTTPS on %s...", app.Config.ServerAddr)
+		return s.ListenAndServeTLS(app.Config.CertPath, app.Config.CertPrivateKeyPath)
+	}
+
+	app.Logger.Infof("Running HTTP on %s...", app.Config.ServerAddr)
+	return s.ListenAndServe()
 }

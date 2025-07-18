@@ -17,6 +17,7 @@ const (
 	defaultEnv                = "dev"
 	defaultFilePath           = "./internal/repository/memory/storage.json"
 	defaultMaxURLsBatchSize   = 5000
+	defaultShutDownTimeout    = 15
 	defaultJWTSecret          = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 	defaultCertPath           = "./cert.pem"
 	defaultCertPrivateKeyPath = "./key.pem"
@@ -35,6 +36,7 @@ type Config struct {
 	CertPrivateKeyPath string
 	JSONConfigFilePath string
 	MaxURLsBatchSize   int
+	ShutDownTimeout    int
 	EnableHTTPS        bool `json:"enable_https"`
 }
 
@@ -146,5 +148,6 @@ func InitConfig() *Config {
 
 	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
 	cfg.JWTSecret = defaultJWTSecret
+	cfg.ShutDownTimeout = defaultShutDownTimeout
 	return cfg
 }
