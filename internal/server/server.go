@@ -87,10 +87,10 @@ func (app *ShortURLApp) Start() error {
 	return nil
 }
 
-func (server *ShortURLApp) initRouter() *chi.Mux {
+func (app *ShortURLApp) initRouter() *chi.Mux {
 	r := chi.NewRouter()
 	compressor := middleware.NewCompressor(gzip.DefaultCompression, compress.CompressedContentTypes...)
-	jwtAuthenticator, err := auth.NewJWTAuthenticator(server.Config.JWTSecret)
+	jwtAuthenticator, err := auth.NewJWTAuthenticator(app.Config.JWTSecret)
 	if err != nil {
 		logging.Log.Fatalf("Server failed initialize jwtAuthenticator | %v", err)
 	}
@@ -101,13 +101,13 @@ func (server *ShortURLApp) initRouter() *chi.Mux {
 	r.Use(compressor.Handler)
 
 	// swagger
-	swaggerJSONURL := fmt.Sprintf("http://%s/swagger/doc.json", server.Config.ServerAddr)
+	swaggerJSONURL := fmt.Sprintf("http://%s/swagger/doc.json", app.Config.ServerAddr)
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(swaggerJSONURL),
 	))
 
 	// handlers
-	httpHandler := handlers.NewHandler(*server.Service)
+	httpHandler := handlers.NewHandler(*app.Service)
 	r.Get("/ping", httpHandler.Ping)
 
 	r.Group(func(r chi.Router) {
