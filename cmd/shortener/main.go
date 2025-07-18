@@ -61,8 +61,8 @@ func main() {
 	s := service.NewShortenerService(appRepo, cfg, delCh)
 	go s.FlushDeleteMessages()
 
-	server := server.NewApp(cfg, logger, delCh, s)
-	err = server.Start()
+	app := server.NewApp(cfg, logger, delCh, s)
+	err = app.Start()
 	if err != nil {
 		logger.Fatalf("Failed init server: %v", err)
 	}
