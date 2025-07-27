@@ -35,6 +35,7 @@ type Config struct {
 	CertPath           string
 	CertPrivateKeyPath string
 	JSONConfigFilePath string
+	TrustedSubnet      string `json:"trusted_subnet"`
 	MaxURLsBatchSize   int
 	ShutDownTimeout    int
 	EnableHTTPS        bool `json:"enable_https"`
@@ -53,6 +54,7 @@ func InitConfig() *Config {
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS")
 	flag.StringVar(&cfg.JSONConfigFilePath, "c", cfg.JSONConfigFilePath, "Path for json config")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "Trusted subnet for access in internal routers")
 
 	flag.Parse()
 
@@ -60,6 +62,11 @@ func InitConfig() *Config {
 	addr := os.Getenv("SERVER_ADDRESS")
 	if addr != "" {
 		cfg.ServerAddr = addr
+	}
+
+	subNet := os.Getenv("TRUSTED_SUBNET")
+	if subNet != "" {
+		cfg.TrustedSubnet = subNet
 	}
 
 	baseURL := os.Getenv("BASE_URL")

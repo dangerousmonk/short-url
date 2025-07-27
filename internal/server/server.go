@@ -24,6 +24,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/network"
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
@@ -118,6 +119,12 @@ func (app *ShortURLApp) initRouter() *chi.Mux {
 		r.Delete("/api/user/urls", httpHandler.APIDeleteBatch)
 		r.Get("/{hash}", httpHandler.GetURL)
 		r.Post("/", httpHandler.Shorten)
+	})
+
+	r.Route("/api/internal", func(r chi.Router) {
+		internalRoutesGroup := r.Group(nil)
+		internalRoutesGroup.Use(network.CheckSubnet(app.Config))
+		internalRoutesGroup.Get("/stats", httpHandler.GetStats)
 	})
 
 	r.Mount("/debug", middleware.Profiler())
