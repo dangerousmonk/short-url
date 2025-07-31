@@ -89,7 +89,7 @@ func TestURLShortenerService_AddURL(t *testing.T) {
 			tc.buildStubs(repo)
 
 			service := &URLShortenerService{Repo: repo, Cfg: cfg}
-			short, err := service.AddURL(context.Background(), tc.url, userID)
+			short, err := service.AddShortURL(context.Background(), tc.url, userID)
 
 			if tc.wantError {
 				require.Error(t, err)

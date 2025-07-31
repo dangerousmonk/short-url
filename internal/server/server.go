@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os/signal"
 	"sync"
@@ -16,6 +17,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	_ "github.com/dangerousmonk/short-url/docs"
@@ -25,6 +28,7 @@ import (
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
 	"github.com/dangerousmonk/short-url/internal/network"
+	"github.com/dangerousmonk/short-url/internal/server/proto"
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
@@ -68,11 +72,23 @@ func (app *ShortURLApp) Start() error {
 		Handler: r,
 	}
 
+	gRPCServer := grpc.NewServer()
+	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(app.Service, app.Config))
+	reflection.Register(gRPCServer)
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		if err := listenAndServe(app, server); err != nil && err != http.ErrServerClosed {
-			panic(err)
+			app.Logger.Fatal("HTTP server failed to start")
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := startgRPS(rootCtx, &wg, app, app.Service); err != nil {
+			app.Logger.Fatal("gRPS server failed to start %v", err)
 		}
 	}()
 
@@ -140,4 +156,32 @@ func listenAndServe(app *ShortURLApp, s *http.Server) error {
 
 	app.Logger.Infof("Running HTTP on %s...", app.Config.ServerAddr)
 	return s.ListenAndServe()
+}
+
+// startgRPS starts grps server
+func startgRPS(ctx context.Context, wg *sync.WaitGroup, app *ShortURLApp, s service.URLShortener) error {
+	lis, err := net.Listen("tcp", app.Config.GRPCServerAddress)
+	if err != nil {
+		return fmt.Errorf("failed to listen on gRPC: %w", err)
+	}
+
+	gRPCServer := grpc.NewServer()
+	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(s, app.Config))
+	reflection.Register(gRPCServer)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := gRPCServer.Serve(lis); err != nil {
+			app.Logger.Fatal("gRPC server failed to start %v", err)
+		}
+	}()
+	app.Logger.Infof("Running gRPC on %s...", app.Config.GRPCServerAddress)
+
+	go func() {
+		<-ctx.Done()
+		gRPCServer.GracefulStop()
+	}()
+
+	return nil
 }

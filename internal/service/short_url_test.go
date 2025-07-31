@@ -104,7 +104,7 @@ func BenchmarkShortURLService(b *testing.B) {
 		URLs[i] = "http://yandex" + strconv.Itoa(i) + ".ru"
 	}
 
-	shortURL, err := service.AddURL(ctx, URLs[0], userID)
+	shortURL, err := service.AddShortURL(ctx, URLs[0], userID)
 	require.NoError(b, err)
 
 	testID := strings.Split(shortURL, "/")[3]
@@ -113,7 +113,7 @@ func BenchmarkShortURLService(b *testing.B) {
 
 	b.Run("AddURL", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err = service.AddURL(ctx, "https://github.com", userID)
+			_, err = service.AddShortURL(ctx, "https://github.com", userID)
 			if err != nil {
 				panic(err)
 			}

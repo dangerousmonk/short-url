@@ -14,17 +14,19 @@ type URLShortener interface {
 	// GetURLData retrieves the original URL data by hash
 	GetURLData(ctx context.Context, shortURL string) (URLData models.URLData, isExist bool)
 	// AddShortURL generates hash for provided URL and saves it along with original URL to internal storage
-	AddShortURL(ctx context.Context, fullURL string, cfg *config.Config, userID string) (shortURL string, err error)
+	AddShortURL(ctx context.Context, fullURL string, userID string) (shortURL string, err error)
 	// Ping checks whether internal storage is up and running
 	Ping(ctx context.Context) error
 	// AddBatch generates hash for multiple URLS and saves it along with original URL to internal storage
-	AddBatch(ctx context.Context, urls []models.APIBatchModel, cfg *config.Config, userID string) ([]models.APIBatchResponse, error)
+	AddBatch(ctx context.Context, urls []models.APIBatchModel, userID string) ([]models.APIBatchResponse, error)
 	// GetUsersURLs retrieves all saved URLs by specific user
-	GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error)
+	GetUsersURLs(ctx context.Context, userID string) ([]models.APIGetUserURLsResponse, error)
 	// DeleteBatch marks multiple records as not active
 	DeleteBatch(ctx context.Context, urls []string, userID string) error
 	// FlushDeleteMessages sends messages for deletion
 	FlushDeleteMessages()
+	// GetStats retrieves server stats with count of users and saved urls
+	GetStats(ctx context.Context) (models.InternalStats, error)
 }
 
 // URLShortenerService is a struct that describes service.

@@ -42,7 +42,7 @@ func (h *HTTPHandler) APIShorten(w http.ResponseWriter, req *http.Request) {
 
 	defer req.Body.Close()
 
-	shortURL, err := h.service.AddURL(req.Context(), r.URL, userID)
+	shortURL, err := h.service.AddShortURL(req.Context(), r.URL, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrURLInvalid):
@@ -111,7 +111,7 @@ func (h *HTTPHandler) Shorten(w http.ResponseWriter, req *http.Request) {
 	fullURL := string(body)
 
 	logging.Log.Infof("adding url from body=%v", fullURL)
-	shortURL, err := h.service.AddURL(req.Context(), fullURL, userID)
+	shortURL, err := h.service.AddShortURL(req.Context(), fullURL, userID)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrURLInvalid):

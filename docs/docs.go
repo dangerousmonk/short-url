@@ -58,6 +58,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/internal/stats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "GetStats retreives stats with stored URLs count and unique user_id count",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Retreives stats with stored URLs count and unique user_id count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalStats"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
         "/api/shorten": {
             "post": {
                 "security": [
@@ -134,7 +165,10 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.APIBatchModel"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIBatchModel"
+                            }
                         }
                     }
                 ],
@@ -142,7 +176,10 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.APIBatchResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIBatchResponse"
+                            }
                         }
                     },
                     "400": {
@@ -182,7 +219,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.APIGetUserURLsResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIGetUserURLsResponse"
+                            }
                         }
                     },
                     "204": {
@@ -304,6 +344,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.InternalStats": {
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.Request": {
             "type": "object",
             "properties": {
@@ -320,24 +371,17 @@ const docTemplate = `{
                 }
             }
         }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "auth",
-            "in": "Cookie"
-        }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
+	Version:          "",
 	Host:             "",
-	BasePath:         "/",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "short-url app",
-	Description:      "API Server",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

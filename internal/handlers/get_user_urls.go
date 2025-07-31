@@ -16,7 +16,7 @@ import (
 //	@Accept			json
 //	@Produce		json
 //	@Tags			API
-//	@Success		200 {object}	models.APIGetUserURLsResponse
+//	@Success		200 {object}	[]models.APIGetUserURLsResponse
 //	@Success		204
 //	@Failure		401,500
 //	@Router			/api/user/urls   [get]

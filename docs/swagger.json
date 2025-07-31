@@ -1,12 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API Server",
-        "title": "short-url app",
-        "contact": {},
-        "version": "1.0"
+        "contact": {}
     },
-    "basePath": "/",
     "paths": {
         "/": {
             "post": {
@@ -44,6 +40,37 @@
                     },
                     "409": {
                         "description": "Conflict"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/api/internal/stats": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "GetStats retreives stats with stored URLs count and unique user_id count",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Retreives stats with stored URLs count and unique user_id count",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.InternalStats"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error"
@@ -127,7 +154,10 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.APIBatchModel"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIBatchModel"
+                            }
                         }
                     }
                 ],
@@ -135,7 +165,10 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/models.APIBatchResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIBatchResponse"
+                            }
                         }
                     },
                     "400": {
@@ -175,7 +208,10 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.APIGetUserURLsResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.APIGetUserURLsResponse"
+                            }
                         }
                     },
                     "204": {
@@ -297,6 +333,17 @@
                 }
             }
         },
+        "models.InternalStats": {
+            "type": "object",
+            "properties": {
+                "urls": {
+                    "type": "integer"
+                },
+                "users": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.Request": {
             "type": "object",
             "properties": {
@@ -312,13 +359,6 @@
                     "type": "string"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "auth",
-            "in": "Cookie"
         }
     }
 }

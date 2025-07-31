@@ -1,4 +1,3 @@
-basePath: /
 definitions:
   models.APIBatchModel:
     properties:
@@ -21,6 +20,13 @@ definitions:
       short_url:
         type: string
     type: object
+  models.InternalStats:
+    properties:
+      urls:
+        type: integer
+      users:
+        type: integer
+    type: object
   models.Request:
     properties:
       url:
@@ -33,9 +39,6 @@ definitions:
     type: object
 info:
   contact: {}
-  description: API Server
-  title: short-url app
-  version: "1.0"
 paths:
   /:
     post:
@@ -82,6 +85,26 @@ paths:
       summary: Redirects to the original URL
       tags:
       - URL
+  /api/internal/stats:
+    get:
+      consumes:
+      - application/json
+      description: GetStats retreives stats with stored URLs count and unique user_id
+        count
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.InternalStats'
+        "500":
+          description: Internal Server Error
+      security:
+      - ApiKeyAuth: []
+      summary: Retreives stats with stored URLs count and unique user_id count
+      tags:
+      - API
   /api/shorten:
     post:
       consumes:
@@ -125,14 +148,18 @@ paths:
         name: data
         required: true
         schema:
-          $ref: '#/definitions/models.APIBatchModel'
+          items:
+            $ref: '#/definitions/models.APIBatchModel'
+          type: array
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.APIBatchResponse'
+            items:
+              $ref: '#/definitions/models.APIBatchResponse'
+            type: array
         "400":
           description: Bad Request
         "401":
@@ -176,7 +203,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.APIGetUserURLsResponse'
+            items:
+              $ref: '#/definitions/models.APIGetUserURLsResponse'
+            type: array
         "204":
           description: No Content
         "401":
@@ -199,9 +228,4 @@ paths:
       summary: DB Healthcheck
       tags:
       - Ping
-securityDefinitions:
-  ApiKeyAuth:
-    in: Cookie
-    name: auth
-    type: apiKey
 swagger: "2.0"
