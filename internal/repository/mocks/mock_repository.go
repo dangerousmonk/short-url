@@ -8,10 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-
 	config "github.com/dangerousmonk/short-url/cmd/config"
 	models "github.com/dangerousmonk/short-url/internal/models"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockRepository is a mock of Repository interface.
@@ -79,6 +78,21 @@ func (m *MockRepository) DeleteBatch(ctx context.Context, urls []string, userID 
 func (mr *MockRepositoryMockRecorder) DeleteBatch(ctx, urls, userID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBatch", reflect.TypeOf((*MockRepository)(nil).DeleteBatch), ctx, urls, userID)
+}
+
+// GetStats mocks base method.
+func (m *MockRepository) GetStats(ctx context.Context) (models.InternalStats, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetStats", ctx)
+	ret0, _ := ret[0].(models.InternalStats)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetStats indicates an expected call of GetStats.
+func (mr *MockRepositoryMockRecorder) GetStats(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStats", reflect.TypeOf((*MockRepository)(nil).GetStats), ctx)
 }
 
 // GetURLData mocks base method.

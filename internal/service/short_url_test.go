@@ -79,6 +79,14 @@ func (rm RepositoryMock) DeleteBatch(ctx context.Context, urls []string, userID 
 	return nil
 }
 
+func (rm RepositoryMock) GetStats(ctx context.Context) (models.InternalStats, error) {
+	stats := models.InternalStats{
+		URLs:  len(rm.storage),
+		Users: len(rm.userStorage),
+	}
+	return stats, nil
+}
+
 func BenchmarkShortURLService(b *testing.B) {
 	_, err := logging.InitLogger("INFO", "test")
 	require.NoError(b, err)
