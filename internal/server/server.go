@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -61,7 +60,6 @@ func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.
 //	@in							Cookie
 //	@name						auth
 func (app *ShortURLApp) Start() error {
-	var wg sync.WaitGroup
 	r := app.initRouter()
 
 	rootCtx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -76,18 +74,14 @@ func (app *ShortURLApp) Start() error {
 	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(app.Service, app.Config))
 	reflection.Register(gRPCServer)
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if err := listenAndServe(app, server); err != nil && err != http.ErrServerClosed {
+		if err := listenAndServeHTTP(app, server); err != nil && err != http.ErrServerClosed {
 			app.Logger.Fatal("HTTP server failed to start")
 		}
 	}()
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
-		if err := startgRPS(rootCtx, &wg, app, app.Service); err != nil {
+		if err := startgRPS(rootCtx, app, app.Service); err != nil {
 			app.Logger.Fatal("gRPS server failed to start %v", err)
 		}
 	}()
@@ -147,8 +141,8 @@ func (app *ShortURLApp) initRouter() *chi.Mux {
 	return r
 }
 
-// listenAndServe handles which method for serving http should be called based on config
-func listenAndServe(app *ShortURLApp, s *http.Server) error {
+// listenAndServeHTTP handles which method for serving http should be called based on config
+func listenAndServeHTTP(app *ShortURLApp, s *http.Server) error {
 	if app.Config.EnableHTTPS {
 		app.Logger.Infof("Running HTTPS on %s...", app.Config.ServerAddr)
 		return s.ListenAndServeTLS(app.Config.CertPath, app.Config.CertPrivateKeyPath)
@@ -159,7 +153,7 @@ func listenAndServe(app *ShortURLApp, s *http.Server) error {
 }
 
 // startgRPS starts grps server
-func startgRPS(ctx context.Context, wg *sync.WaitGroup, app *ShortURLApp, s service.URLShortener) error {
+func startgRPS(ctx context.Context, app *ShortURLApp, s service.URLShortener) error {
 	lis, err := net.Listen("tcp", app.Config.GRPCServerAddress)
 	if err != nil {
 		return fmt.Errorf("failed to listen on gRPC: %w", err)
@@ -169,9 +163,7 @@ func startgRPS(ctx context.Context, wg *sync.WaitGroup, app *ShortURLApp, s serv
 	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(s, app.Config))
 	reflection.Register(gRPCServer)
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
 		if err := gRPCServer.Serve(lis); err != nil {
 			app.Logger.Fatal("gRPC server failed to start %v", err)
 		}

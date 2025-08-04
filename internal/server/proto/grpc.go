@@ -35,7 +35,7 @@ func NewShortenerGRPCServer(s service.URLShortener, cfg *config.Config) *Shorten
 func (srv *ShortenerGRPCServer) Create(ctx context.Context, req *ShortenRequest) (*ShortenResponse, error) {
 	userID := getKeyFromCtx(ctx, string(auth.UserIDHeaderName))
 	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "User id required")
+		return nil, status.Error(codes.Internal, "User id is missing")
 	}
 
 	shortURL, err := srv.service.AddShortURL(ctx, req.Url, userID)
@@ -64,7 +64,7 @@ func (srv *ShortenerGRPCServer) Create(ctx context.Context, req *ShortenRequest)
 func (srv *ShortenerGRPCServer) AddBatch(ctx context.Context, req *ShortenBatchRequest) (*ShortenBatchResponse, error) {
 	userID := getKeyFromCtx(ctx, string(auth.UserIDHeaderName))
 	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "User id required")
+		return nil, status.Error(codes.Internal, "User id is missing")
 	}
 
 	urls := make([]models.APIBatchModel, len(req.Items))
@@ -104,7 +104,7 @@ func (srv *ShortenerGRPCServer) AddBatch(ctx context.Context, req *ShortenBatchR
 func (srv *ShortenerGRPCServer) GetUserURLs(ctx context.Context, req *GetUserURLsRequest) (*GetUserURLsResponse, error) {
 	userID := getKeyFromCtx(ctx, string(auth.UserIDHeaderName))
 	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "User id required")
+		return nil, status.Error(codes.Internal, "User id is missing")
 	}
 
 	userURLs, err := srv.service.GetUsersURLs(ctx, userID)
@@ -126,7 +126,7 @@ func (srv *ShortenerGRPCServer) GetUserURLs(ctx context.Context, req *GetUserURL
 func (srv *ShortenerGRPCServer) BatchDelete(ctx context.Context, req *DeleteBatchRequest) (*emptypb.Empty, error) {
 	userID := getKeyFromCtx(ctx, string(auth.UserIDHeaderName))
 	if userID == "" {
-		return nil, status.Error(codes.InvalidArgument, "User id required")
+		return nil, status.Error(codes.Internal, "User id is missing")
 	}
 
 	if len(req.ShortUrls) == 0 {

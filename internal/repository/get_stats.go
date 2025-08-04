@@ -12,13 +12,13 @@ import (
 func (r *PostgresRepo) GetStats(ctx context.Context) (models.InternalStats, error) {
 	var stats models.InternalStats
 
-	query := `
+	const getStatsQuery = `
 	SELECT 
-    	COUNT(*) AS urls,
-    	COUNT(DISTINCT user_id) AS users
+		COUNT(*) AS urls,
+		COUNT(DISTINCT user_id) AS users
 	FROM urls;`
 
-	result := r.conn.QueryRowContext(ctx, query)
+	result := r.conn.QueryRowContext(ctx, getStatsQuery)
 	err := result.Scan(&stats.URLs, &stats.Users)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

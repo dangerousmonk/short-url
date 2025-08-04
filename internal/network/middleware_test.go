@@ -20,41 +20,41 @@ func TestCheckSubnet(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "valid ip in subnet",
+			name:           "valid_ip_in_subnet",
 			trustedSubnet:  "192.168.1.0/24",
 			xRealIP:        "192.168.1.100",
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "ip not in subnet",
+			name:           "ip_not_in_subnet",
 			trustedSubnet:  "192.168.1.0/24",
 			xRealIP:        "10.0.0.1",
 			expectedStatus: http.StatusForbidden,
 			expectedBody:   "Access forbidden\n",
 		},
 		{
-			name:           "invalid ip format",
+			name:           "invalid_ip_format",
 			trustedSubnet:  "192.168.1.0/24",
 			xRealIP:        "not.an.ip",
 			expectedStatus: http.StatusForbidden,
 			expectedBody:   "Access forbidden\n",
 		},
 		{
-			name:           "missing x-real-ip header",
+			name:           "missing_header",
 			trustedSubnet:  "192.168.1.0/24",
 			xRealIP:        "",
 			expectedStatus: http.StatusForbidden,
 			expectedBody:   "X-Real-IP header required\n",
 		},
 		{
-			name:           "empty trusted subnet",
+			name:           "empty_subnet",
 			trustedSubnet:  "",
 			xRealIP:        "192.168.1.100",
 			expectedStatus: http.StatusForbidden,
 			expectedBody:   "Access without trusted subnet option is forbidden\n",
 		},
 		{
-			name:           "invalid subnet format",
+			name:           "invalid_subnet_format",
 			trustedSubnet:  "invalid.subnet",
 			xRealIP:        "192.168.1.100",
 			expectedStatus: http.StatusInternalServerError,
