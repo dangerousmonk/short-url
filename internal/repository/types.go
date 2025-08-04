@@ -24,6 +24,8 @@ type Repository interface {
 	GetUsersURLs(ctx context.Context, userID, baseURL string) ([]models.APIGetUserURLsResponse, error)
 	// DeleteBatch marks multiple records as not active
 	DeleteBatch(ctx context.Context, urls []string, userID string) error
+	// GetStats retrieves stats with stored URLs count and unique user_id count
+	GetStats(ctx context.Context) (models.InternalStats, error)
 }
 
 // PostgresRepo is a struct for postgresql Repository.

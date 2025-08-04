@@ -40,3 +40,9 @@ type DeleteURLChannelMessage struct {
 	UserID string
 	URLs   []string
 }
+
+// InternalStats represents statistics with count of shortened URLs and count of users
+type InternalStats struct {
+	URLs  int `json:"urls"`
+	Users int `json:"users"`
+}

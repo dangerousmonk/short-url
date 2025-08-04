@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package server;
+
+option go_package = "internal/server/proto";
+
+import "google/protobuf/empty.proto";
+
+// Messages for single URL
+message ShortenRequest {
+    string url = 1;
+}
+
+message ShortenResponse {
+    string result = 1;
+}
+
+// Messages for batch operations
+message ShortenBatchItem {
+    string correlation_id = 1;
+    string original_url = 2;
+}
+
+
+message ShortenBatchRequest {
+  message Item {
+    string correlation_id = 1;
+    string original_url = 2;
+  }
+  repeated Item items = 1;
+}
+
+message ShortenBatchResponse {
+  message Item {
+    string correlation_id = 1;
+    string short_url = 2;
+  }
+  repeated Item items = 1;
+}
+
+// Messages for getting all URLs by user
+message UserURLItem {
+  string short_url = 1;
+  string original_url = 2;
+}
+
+message GetUserURLsRequest {};
+
+message GetUserURLsResponse {
+  repeated UserURLItem urls = 1;
+}
+
+// Message for deleting URLs
+message DeleteBatchRequest {
+  repeated string short_urls = 1;
+}
+
+// Messages for geting service stats
+message ServiceStatsRequest {};
+
+message ServiceStatsResponse {
+  uint32 users = 1;
+  uint32 urls = 2;
+}
+
+// Service for working with short URLs
+service URLShortenerService {
+  // Create a short URL
+  rpc Create(ShortenRequest) returns (ShortenResponse);
+
+  // Create batch short URLs
+  rpc AddBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
+
+  // Get all URLs saved by specific user
+  rpc GetUserURLs(GetUserURLsRequest) returns (GetUserURLsResponse);
+
+  // Batch delete URLs
+  rpc BatchDelete(DeleteBatchRequest) returns (google.protobuf.Empty);
+
+  // Retrieve service statistics
+  rpc GetServiceStats(ServiceStatsRequest) returns (ServiceStatsResponse);
+
+  // Service health
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+}

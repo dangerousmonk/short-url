@@ -17,8 +17,8 @@ var (
 	ErrSaveBatchFailed = errors.New("repo: failed to save data")
 )
 
-// BatchCreate is used to create multiple short URLs.
-func (s *URLShortenerService) BatchCreate(ctx context.Context, urls []models.APIBatchModel, userID string) ([]models.APIBatchResponse, error) {
+// AddBatch is used to create multiple short URLs.
+func (s *URLShortenerService) AddBatch(ctx context.Context, urls []models.APIBatchModel, userID string) ([]models.APIBatchResponse, error) {
 	var validURLs []models.APIBatchModel
 
 	if len(urls) > s.Cfg.MaxURLsBatchSize {

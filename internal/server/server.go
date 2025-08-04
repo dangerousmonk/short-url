@@ -6,9 +6,9 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -16,6 +16,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/dangerousmonk/short-url/cmd/config"
 	_ "github.com/dangerousmonk/short-url/docs"
@@ -24,6 +26,8 @@ import (
 	"github.com/dangerousmonk/short-url/internal/handlers"
 	"github.com/dangerousmonk/short-url/internal/logging"
 	"github.com/dangerousmonk/short-url/internal/models"
+	"github.com/dangerousmonk/short-url/internal/network"
+	"github.com/dangerousmonk/short-url/internal/server/proto"
 	"github.com/dangerousmonk/short-url/internal/service"
 )
 
@@ -56,7 +60,6 @@ func NewApp(config *config.Config, logger *zap.SugaredLogger, delCh chan models.
 //	@in							Cookie
 //	@name						auth
 func (app *ShortURLApp) Start() error {
-	var wg sync.WaitGroup
 	r := app.initRouter()
 
 	rootCtx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -67,11 +70,19 @@ func (app *ShortURLApp) Start() error {
 		Handler: r,
 	}
 
-	wg.Add(1)
+	gRPCServer := grpc.NewServer()
+	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(app.Service, app.Config))
+	reflection.Register(gRPCServer)
+
 	go func() {
-		defer wg.Done()
-		if err := listenAndServe(app, server); err != nil && err != http.ErrServerClosed {
-			panic(err)
+		if err := listenAndServeHTTP(app, server); err != nil && err != http.ErrServerClosed {
+			app.Logger.Fatal("HTTP server failed to start")
+		}
+	}()
+
+	go func() {
+		if err := startgRPS(rootCtx, app, app.Service); err != nil {
+			app.Logger.Fatal("gRPS server failed to start %v", err)
 		}
 	}()
 
@@ -120,12 +131,18 @@ func (app *ShortURLApp) initRouter() *chi.Mux {
 		r.Post("/", httpHandler.Shorten)
 	})
 
+	r.Route("/api/internal", func(r chi.Router) {
+		internalRoutesGroup := r.Group(nil)
+		internalRoutesGroup.Use(network.CheckSubnet(app.Config))
+		internalRoutesGroup.Get("/stats", httpHandler.GetStats)
+	})
+
 	r.Mount("/debug", middleware.Profiler())
 	return r
 }
 
-// listenAndServe handles which method for serving http should be called based on config
-func listenAndServe(app *ShortURLApp, s *http.Server) error {
+// listenAndServeHTTP handles which method for serving http should be called based on config
+func listenAndServeHTTP(app *ShortURLApp, s *http.Server) error {
 	if app.Config.EnableHTTPS {
 		app.Logger.Infof("Running HTTPS on %s...", app.Config.ServerAddr)
 		return s.ListenAndServeTLS(app.Config.CertPath, app.Config.CertPrivateKeyPath)
@@ -133,4 +150,30 @@ func listenAndServe(app *ShortURLApp, s *http.Server) error {
 
 	app.Logger.Infof("Running HTTP on %s...", app.Config.ServerAddr)
 	return s.ListenAndServe()
+}
+
+// startgRPS starts grps server
+func startgRPS(ctx context.Context, app *ShortURLApp, s service.URLShortener) error {
+	lis, err := net.Listen("tcp", app.Config.GRPCServerAddress)
+	if err != nil {
+		return fmt.Errorf("failed to listen on gRPC: %w", err)
+	}
+
+	gRPCServer := grpc.NewServer()
+	proto.RegisterURLShortenerServiceServer(gRPCServer, proto.NewShortenerGRPCServer(s, app.Config))
+	reflection.Register(gRPCServer)
+
+	go func() {
+		if err := gRPCServer.Serve(lis); err != nil {
+			app.Logger.Fatal("gRPC server failed to start %v", err)
+		}
+	}()
+	app.Logger.Infof("Running gRPC on %s...", app.Config.GRPCServerAddress)
+
+	go func() {
+		<-ctx.Done()
+		gRPCServer.GracefulStop()
+	}()
+
+	return nil
 }

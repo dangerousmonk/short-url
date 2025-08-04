@@ -21,6 +21,7 @@ const (
 	defaultJWTSecret          = "b6e2490a47c14cb7a1732aed3ba3f3c5"
 	defaultCertPath           = "./cert.pem"
 	defaultCertPrivateKeyPath = "./key.pem"
+	defaultGRPCAddress        = "localhost:3200"
 )
 
 // Config represents a structure that contains all configurations options for the application.
@@ -35,6 +36,8 @@ type Config struct {
 	CertPath           string
 	CertPrivateKeyPath string
 	JSONConfigFilePath string
+	TrustedSubnet      string `json:"trusted_subnet"`
+	GRPCServerAddress  string
 	MaxURLsBatchSize   int
 	ShutDownTimeout    int
 	EnableHTTPS        bool `json:"enable_https"`
@@ -53,6 +56,7 @@ func InitConfig() *Config {
 	flag.StringVar(&cfg.DatabaseDSN, "d", cfg.DatabaseDSN, "Database DSN")
 	flag.BoolVar(&cfg.EnableHTTPS, "s", cfg.EnableHTTPS, "Enable HTTPS")
 	flag.StringVar(&cfg.JSONConfigFilePath, "c", cfg.JSONConfigFilePath, "Path for json config")
+	flag.StringVar(&cfg.TrustedSubnet, "t", cfg.TrustedSubnet, "Trusted subnet for access in internal routers")
 
 	flag.Parse()
 
@@ -60,6 +64,11 @@ func InitConfig() *Config {
 	addr := os.Getenv("SERVER_ADDRESS")
 	if addr != "" {
 		cfg.ServerAddr = addr
+	}
+
+	subNet := os.Getenv("TRUSTED_SUBNET")
+	if subNet != "" {
+		cfg.TrustedSubnet = subNet
 	}
 
 	baseURL := os.Getenv("BASE_URL")
@@ -149,5 +158,6 @@ func InitConfig() *Config {
 	cfg.MaxURLsBatchSize = defaultMaxURLsBatchSize
 	cfg.JWTSecret = defaultJWTSecret
 	cfg.ShutDownTimeout = defaultShutDownTimeout
+	cfg.GRPCServerAddress = defaultGRPCAddress
 	return cfg
 }

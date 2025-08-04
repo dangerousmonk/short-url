@@ -126,7 +126,7 @@ func TestURLShortenerService_BatchCreate(t *testing.T) {
 			tc.buildStubs(repo)
 
 			service := &URLShortenerService{Repo: repo, Cfg: cfg}
-			urls, err := service.BatchCreate(context.Background(), tc.input, userID)
+			urls, err := service.AddBatch(context.Background(), tc.input, userID)
 
 			if tc.wantError {
 				require.Error(t, err)
